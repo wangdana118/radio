@@ -850,7 +850,7 @@ const STATIONS = [
                         "name": "河南教育广播",
                         "tvg_name": "河南教育广播",
                         "province": "河南",
-                        "url": "http://ls.qingting.fm/live/1207.m3u8",
+                        "url": "https://stream.hndt.com/live/jiaoyu/playlist.m3u8",
                         "freq": {
                                     "fm": {
                                                 "郑州": "106.6"
@@ -2075,23 +2075,37 @@ function startHLS(url) {
             });
         });
         
-        // 非致命错误自动恢复
+        // 错误恢复：带退避重试 + 实例重建
+        hls._retryCount = 0;
+        hls._maxRetries = 8;
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            hls._retryCount = 0; // manifest 解析成功则重置计数
+        });
         hls.on(Hls.Events.ERROR, (event, data) => {
             if (data.fatal) {
+                hls._retryCount++;
+                const delay = Math.min(hls._retryCount * 800, 6000);
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        playingStatus.textContent = '网络中断，尝试恢复...';
-                        hls.startLoad();
+                        playingStatus.textContent = `网络中断，第${hls._retryCount}次重试...`;
+                        setTimeout(() => hls.startLoad(), delay);
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
-                        playingStatus.textContent = '媒体错误，尝试恢复...';
-                        hls.recoverMediaError();
+                        playingStatus.textContent = `媒体错误，第${hls._retryCount}次恢复...`;
+                        setTimeout(() => hls.recoverMediaError(), delay);
                         break;
                     default:
                         playingStatus.textContent = '播放失败，切换直连模式...';
                         hls.destroy();
                         tryDirectPlay(url);
-                        break;
+                        return;
+                }
+                // 超过最大重试次数，重建 HLS 实例
+                if (hls._retryCount >= hls._maxRetries) {
+                    playingStatus.textContent = '多次失败，重建播放器...';
+                    hls.destroy();
+                    player._hls = null;
+                    setTimeout(() => startHLS(url), 1500);
                 }
             }
         });
