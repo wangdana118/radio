@@ -1,0 +1,2139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>å¨å½çµå°èå - å®æ¶æ¶å¬</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 20px 24px; border-bottom: 2px solid #e94560; position: sticky; top: 0; z-index: 100; }
+.header h1 { font-size: 22px; color: #fff; margin-bottom: 4px; }
+.header .sub { font-size: 12px; color: #8899aa; }
+.search-bar { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.search-bar input, .search-bar select { padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0e0e0; font-size: 14px; outline: none; transition: border .2s; }
+.search-bar input:focus, .search-bar select:focus { border-color: #e94560; }
+.search-bar input { flex: 1; min-width: 200px; }
+.search-bar select { min-width: 130px; }
+.player-bar { background: #1a1a2e; padding: 12px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #222; position: sticky; top: 112px; z-index: 99; }
+.player-bar .now-playing { flex: 1; font-size: 15px; }
+.player-bar .now-playing .name { color: #e94560; font-weight: bold; }
+.player-bar .now-playing .prov { font-size: 12px; color: #888; }
+.player-bar .status { font-size: 12px; color: #4caf50; }
+.player-bar .stop-btn { padding: 6px 16px; border-radius: 6px; background: #e94560; color: #fff; border: none; cursor: pointer; font-size: 13px; }
+.player-bar .stop-btn:hover { background: #ff6b81; }
+.stats { padding: 8px 24px; font-size: 12px; color: #666; border-bottom: 1px solid #1a1a1a; background: #111; }
+.main { padding: 16px 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: #1a1a1a; border: 1px solid #252525; border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all .2s; position: relative; }
+.card:hover { border-color: #e94560; background: #1e1e24; transform: translateY(-1px); }
+.card.active { border-color: #e94560; background: #1e1020; box-shadow: 0 0 20px rgba(233,69,96,0.15); }
+.card .card-name { font-size: 16px; font-weight: 600; color: #f0f0f0; margin-bottom: 4px; }
+.card .card-prov { font-size: 11px; color: #e94560; background: rgba(233,69,96,0.1); display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+.card .card-freq { font-size: 12px; color: #888; line-height: 1.6; }
+.card .card-freq span { color: #4fc3f7; }
+.audio-hidden { display: none; }
+.notice { text-align: center; padding: 60px 20px; color: #666; }
+.notice .icon { font-size: 48px; margin-bottom: 16px; }
+.footer { text-align: center; padding: 20px; font-size: 11px; color: #444; border-top: 1px solid #1a1a1a; margin-top: 20px; }
+@media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .search-bar input, .search-bar select { width: 100%; }
+    .player-bar { top: 152px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>å¨å½çµå°èå</h1>
+    <div class="sub">æç´¢é¢çï¼å®æ¶æ¶å¬å¨æ­èç®</div>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="æç´¢çµå°åç§°ãé¢çï¼å¦ 106.1ãäº¤éãé³ä¹ï¼..." oninput="filterStations()">
+        <select id="provFilter" onchange="filterStations()">
+            <option value="">å¨é¨çä»½</option>
+        </select>
+    </div>
+</div>
+
+<div class="player-bar" id="playerBar">
+    <div class="now-playing">
+        <span id="playingName" class="name">æªéæ©çµå°</span>
+        <span id="playingProv" class="prov"></span>
+    </div>
+    <span class="status" id="playingStatus"></span>
+    <button class="stop-btn" onclick="stopPlaying()">åæ­¢</button>
+</div>
+
+<div class="stats" id="stats">å± 0 ä¸ªçµå°</div>
+
+<div class="main">
+    <div class="grid" id="stationGrid"></div>
+</div>
+
+<div class="notice" id="noResult" style="display:none">
+    <div class="icon">ð»</div>
+    <div>æ²¡æå¹éççµå°</div>
+</div>
+
+<div class="footer">
+    æ°æ®æ¥æºï¼å¤®å¹¿/åçå¹¿æ­çµè§å°å¬å¼æµåªä½ | å®æ¶æµå¯è½å ç½ç»æ³¢å¨æä¸å¯ç¨
+</div>
+
+<audio id="audioPlayer" class="audio-hidden" controls></audio>
+
+<script>
+// çµå°æ°æ®
+const STATIONS = [
+            {
+                        "name": "å¤§æ¹¾åºä¹å£°",
+                        "tvg_name": "å¤§æ¹¾åºä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn007.cnr.cn/live/hxzs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç»å¸é³ä¹",
+                        "tvg_name": "ç»å¸é³ä¹",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn004.cnr.cn/live/dszs/index.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "101.8"
+                                    }
+                        }
+            },
+            {
+                        "name": "ç»æµä¹å£°",
+                        "tvg_name": "ç»æµä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn002.cnr.cn/live/jjzs/index.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "96.6",
+                                                "ä¸æµ·": "91.4",
+                                                "å¹¿å·": "106.6",
+                                                "æ­¦æ±": "102.6",
+                                                "éå·": "103.2",
+                                                "æé½": "94.0",
+                                                "å¤©æ´¥": "98.0",
+                                                "å¤§è¿": "104.3",
+                                                "åäº¬": "102.4"
+                                    },
+                                    "am": {
+                                                "å¨å½": "630/720/855"
+                                    }
+                        }
+            },
+            {
+                        "name": "èå¹´ä¹å£°",
+                        "tvg_name": "èå¹´ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn011.cnr.cn/live/lnzs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ°æä¹å£°",
+                        "tvg_name": "æ°æä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn009.cnr.cn/live/mzzs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åæµ·ä¹å£°",
+                        "tvg_name": "åæµ·ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/nhzs.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¥å·ä¹å£°",
+                        "tvg_name": "ç¥å·ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn006.cnr.cn/live/szzs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æèºä¹å£°",
+                        "tvg_name": "æèºä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn010.cnr.cn/live/wyzs/index.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "106.6"
+                                    }
+                        }
+            },
+            {
+                        "name": "é¦æ¸¯ä¹å£°",
+                        "tvg_name": "é¦æ¸¯ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn008.cnr.cn/live/xgzs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é³ä¹ä¹å£°",
+                        "tvg_name": "é³ä¹ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn003.cnr.cn/live/yyzs/index.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "90.0",
+                                                "ä¸æµ·": "107.7",
+                                                "å¹¿å·": "87.4",
+                                                "é¿æ²": "90.1",
+                                                "æ²é³": "99.8",
+                                                "å¤©æ´¥": "92.5",
+                                                "æé½": "103.5",
+                                                "åäº¬": "98.9"
+                                    },
+                                    "am": {
+                                                "å¨å½": "747"
+                                    }
+                        }
+            },
+            {
+                        "name": "éè¯»ä¹å£°",
+                        "tvg_name": "éè¯»ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn014.cnr.cn/live/ylgb/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ä¸­å½ä¹å£°",
+                        "tvg_name": "ä¸­å½ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn001.cnr.cn/live/zgzs/index.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "106.1",
+                                                "ä¸æµ·": "99.0",
+                                                "å¹¿å·": "89.3",
+                                                "æé½": "87.2",
+                                                "æ­å·": "90.2",
+                                                "æµå": "87.2",
+                                                "éå·": "101.2",
+                                                "è¥¿å®": "96.4",
+                                                "å¤©æ´¥": "102.9",
+                                                "æ²é³": "94.8",
+                                                "æ­¦æ±": "95.6",
+                                                "é¿æ²": "103.2",
+                                                "åå°æ»¨": "94.6",
+                                                "ææ": "100.8",
+                                                "éåº": "95.2"
+                                    },
+                                    "am": {
+                                                "å¨å½": "639/981"
+                                    }
+                        }
+            },
+            {
+                        "name": "å°æµ·ä¹å£°",
+                        "tvg_name": "å°æµ·ä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn005.cnr.cn/live/zhzs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ä¸­å½äº¤éå¹¿æ­",
+                        "tvg_name": "ä¸­å½äº¤éå¹¿æ­",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn016.cnr.cn/live/gsgljtgb/index.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "99.6",
+                                                "å¤©æ´¥": "99.6",
+                                                "æ²³å": "101.2"
+                                    }
+                        }
+            },
+            {
+                        "name": "ä¸­å½ä¹¡æä¹å£°",
+                        "tvg_name": "ä¸­å½ä¹¡æä¹å£°",
+                        "province": "æ»å°",
+                        "url": "https://ngcdn017.cnr.cn/live/xczs/index.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åè¯­ç¯ç",
+                        "tvg_name": "åè¯­ç¯ç",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/hyhq.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¯çèµè®¯",
+                        "tvg_name": "ç¯çèµè®¯",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/905.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è½»æ¾è°é¢",
+                        "tvg_name": "è½»æ¾è°é¢",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/915.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ä¸çåå£°",
+                        "tvg_name": "ä¸çåå£°",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/hxfh.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "China Plus Radio",
+                        "tvg_name": "China Plus Radio",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/am846.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "HITFMå½éæµè¡é³ä¹",
+                        "tvg_name": "HITFMå½éæµè¡é³ä¹",
+                        "province": "æ»å°",
+                        "url": "https://sk.cri.cn/887.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±è¥¿é½å¸å¹¿æ­",
+                        "tvg_name": "æ±è¥¿é½å¸å¹¿æ­",
+                        "province": "æ±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jiangxdsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±è¥¿äº¤éå¹¿æ­",
+                        "tvg_name": "æ±è¥¿äº¤éå¹¿æ­",
+                        "province": "æ±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jiangxjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±è¥¿æ°çå¹¿æ­",
+                        "tvg_name": "æ±è¥¿æ°çå¹¿æ­",
+                        "province": "æ±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jiangxmsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±è¥¿åæå¹¿æ­",
+                        "tvg_name": "æ±è¥¿åæå¹¿æ­",
+                        "province": "æ±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jiangxncgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±è¥¿é³ä¹å¹¿æ­",
+                        "tvg_name": "æ±è¥¿é³ä¹å¹¿æ­",
+                        "province": "æ±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jiangxyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±è¥¿æ°é»å¹¿æ­",
+                        "tvg_name": "æ±è¥¿æ°é»å¹¿æ­",
+                        "province": "æ±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jiangxxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½å°è¯´è¯ä¹¦",
+                        "tvg_name": "å®å¾½å°è¯´è¯ä¹¦",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahxspsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½äº¤éå¹¿æ­",
+                        "tvg_name": "å®å¾½äº¤éå¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½ç»æµå¹¿æ­",
+                        "tvg_name": "å®å¾½ç»æµå¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½ææ¸¸å¹¿æ­",
+                        "tvg_name": "å®å¾½ææ¸¸å¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahlygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½åæå¹¿æ­",
+                        "tvg_name": "å®å¾½åæå¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahncgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½çæ´»å¹¿æ­",
+                        "tvg_name": "å®å¾½çæ´»å¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½ææ²å¹¿æ­",
+                        "tvg_name": "å®å¾½ææ²å¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahxqgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½é³ä¹å¹¿æ­",
+                        "tvg_name": "å®å¾½é³ä¹å¹¿æ­",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¾½ä¹å£°",
+                        "tvg_name": "å®å¾½ä¹å£°",
+                        "province": "å®å¾½",
+                        "url": "https://satellitepull.cnr.cn/live/wxahxxgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åäº¬åå¸å¹¿æ­",
+                        "tvg_name": "åäº¬åå¸å¹¿æ­",
+                        "province": "åäº¬",
+                        "url": "https://satellitepull.cnr.cn/live/wxbjcsfwgl/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åäº¬äº¤éå¹¿æ­",
+                        "tvg_name": "åäº¬äº¤éå¹¿æ­",
+                        "province": "åäº¬",
+                        "url": "https://cnlive.cnr.cn/hls/bjjtgb.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åäº¬æ°é»å¹¿æ­",
+                        "tvg_name": "åäº¬æ°é»å¹¿æ­",
+                        "province": "åäº¬",
+                        "url": "https://satellitepull.cnr.cn/live/wxbjxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åäº¬é³ä¹å¹¿æ­",
+                        "tvg_name": "åäº¬é³ä¹å¹¿æ­",
+                        "province": "åäº¬",
+                        "url": "https://cnlive.cnr.cn/hls/bjyygb.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éåºé½å¸å¹¿æ­",
+                        "tvg_name": "éåºé½å¸å¹¿æ­",
+                        "province": "éåº",
+                        "url": "https://satellitepull.cnr.cn/live/wxcqdsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éåºäº¤éå¹¿æ­",
+                        "tvg_name": "éåºäº¤éå¹¿æ­",
+                        "province": "éåº",
+                        "url": "https://satellitepull.cnr.cn/live/wxcqjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éåºç»æµå¹¿æ­",
+                        "tvg_name": "éåºç»æµå¹¿æ­",
+                        "province": "éåº",
+                        "url": "https://satellitepull.cnr.cn/live/wxcqjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éåºæèºå¹¿æ­",
+                        "tvg_name": "éåºæèºå¹¿æ­",
+                        "province": "éåº",
+                        "url": "https://satellitepull.cnr.cn/live/wxcqwygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éåºæ°é»å¹¿æ­",
+                        "tvg_name": "éåºæ°é»å¹¿æ­",
+                        "province": "éåº",
+                        "url": "https://satellitepull.cnr.cn/live/wxcqxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éåºé³ä¹å¹¿æ­",
+                        "tvg_name": "éåºé³ä¹å¹¿æ­",
+                        "province": "éåº",
+                        "url": "https://satellitepull.cnr.cn/live/wxcqyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¦å»ºä¸åå¹¿æ­",
+                        "tvg_name": "ç¦å»ºä¸åå¹¿æ­",
+                        "province": "ç¦å»º",
+                        "url": "https://satellitepull.cnr.cn/live/wx32fjdngb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¦å»ºé½å¸å¹¿æ­",
+                        "tvg_name": "ç¦å»ºé½å¸å¹¿æ­",
+                        "province": "ç¦å»º",
+                        "url": "https://satellitepull.cnr.cn/live/wx32fjdndsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¦å»ºäº¤éå¹¿æ­",
+                        "tvg_name": "ç¦å»ºäº¤éå¹¿æ­",
+                        "province": "ç¦å»º",
+                        "url": "https://satellitepull.cnr.cn/live/wx32fjdnjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¦å»ºè´¢ç»961",
+                        "tvg_name": "ç¦å»ºè´¢ç»961",
+                        "province": "ç¦å»º",
+                        "url": "https://satellitepull.cnr.cn/live/wx32fjdnjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¦å»ºæ±½è½¦é³ä¹",
+                        "tvg_name": "ç¦å»ºæ±½è½¦é³ä¹",
+                        "province": "ç¦å»º",
+                        "url": "https://satellitepull.cnr.cn/live/wx32fjdnyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¦å»ºæ°é»å¹¿æ­",
+                        "tvg_name": "ç¦å»ºæ°é»å¹¿æ­",
+                        "province": "ç¦å»º",
+                        "url": "https://satellitepull.cnr.cn/live/wx32fjxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "çèé½å¸è°é¢",
+                        "tvg_name": "çèé½å¸è°é¢",
+                        "province": "çè",
+                        "url": "https://satellitepull.cnr.cn/live/wxgsdstb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "çèé»æ²³ä¹å£°",
+                        "tvg_name": "çèé»æ²³ä¹å£°",
+                        "province": "çè",
+                        "url": "https://satellitepull.cnr.cn/live/wxgshhzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "çèäº¤éå¹¿æ­",
+                        "tvg_name": "çèäº¤éå¹¿æ­",
+                        "province": "çè",
+                        "url": "https://satellitepull.cnr.cn/live/wxgsjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "çèåæå¹¿æ­",
+                        "tvg_name": "çèåæå¹¿æ­",
+                        "province": "çè",
+                        "url": "https://satellitepull.cnr.cn/live/wxgsncgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "çèéæ¥è°é¢",
+                        "tvg_name": "çèéæ¥è°é¢",
+                        "province": "çè",
+                        "url": "https://satellitepull.cnr.cn/live/wxgsqcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "çèæ°é»ç»¼å",
+                        "tvg_name": "çèæ°é»ç»¼å",
+                        "province": "çè",
+                        "url": "https://satellitepull.cnr.cn/live/wxgsxwzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿ä¸åå¸ä¹å£°",
+                        "tvg_name": "å¹¿ä¸åå¸ä¹å£°",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdcszs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿ä¸è¡å¸å¹¿æ­",
+                        "tvg_name": "å¹¿ä¸è¡å¸å¹¿æ­",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdgsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿ä¸åç²¤ä¹å£°",
+                        "tvg_name": "å¹¿ä¸åç²¤ä¹å£°",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxnyzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿ä¸æä½å¹¿æ­",
+                        "tvg_name": "å¹¿ä¸æä½å¹¿æ­",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdwtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿ä¸æ°é»å¹¿æ­",
+                        "tvg_name": "å¹¿ä¸æ°é»å¹¿æ­",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿ä¸é³ä¹ä¹å£°",
+                        "tvg_name": "å¹¿ä¸é³ä¹ä¹å£°",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdyyzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åæ¹çæ´»å¹¿æ­",
+                        "tvg_name": "åæ¹çæ´»å¹¿æ­",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdnfshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ·±å³é£æ¬971",
+                        "tvg_name": "æ·±å³é£æ¬971",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxszfy971/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ·±å³äº¤éé¢ç",
+                        "tvg_name": "æ·±å³äº¤éé¢ç",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxszjjpl/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ·±å³ç§å®¶è½¦",
+                        "tvg_name": "æ·±å³ç§å®¶è½¦",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxszsjcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¾åäº¤éå¹¿æ­",
+                        "tvg_name": "ç¾åäº¤éå¹¿æ­",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdycjtt/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç æ±ç»æµå°",
+                        "tvg_name": "ç æ±ç»æµå°",
+                        "province": "å¹¿ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxgdzjjjt/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿è¥¿å¯¹å¤å¹¿æ­",
+                        "tvg_name": "å¹¿è¥¿å¯¹å¤å¹¿æ­",
+                        "province": "å¹¿è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gxdwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿è¥¿äº¤éå¹¿æ­",
+                        "tvg_name": "å¹¿è¥¿äº¤éå¹¿æ­",
+                        "province": "å¹¿è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gxjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿è¥¿æè²çæ´»",
+                        "tvg_name": "å¹¿è¥¿æè²çæ´»",
+                        "province": "å¹¿è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gbjyshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿è¥¿ç»æµå¹¿æ­",
+                        "tvg_name": "å¹¿è¥¿ç»æµå¹¿æ­",
+                        "province": "å¹¿è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gxjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿è¥¿äººæ°å¹¿æ­",
+                        "tvg_name": "å¹¿è¥¿äººæ°å¹¿æ­",
+                        "province": "å¹¿è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gxrmgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å¹¿è¥¿æèºå¹¿æ­",
+                        "tvg_name": "å¹¿è¥¿æèºå¹¿æ­",
+                        "province": "å¹¿è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gxwygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è´µå·é½å¸å¹¿æ­",
+                        "tvg_name": "è´µå·é½å¸å¹¿æ­",
+                        "province": "è´µå·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gzqcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è´µå·æäºå¹¿æ­",
+                        "tvg_name": "è´µå·æäºå¹¿æ­",
+                        "province": "è´µå·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gzgsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è´µå·ç»æµå¹¿æ­",
+                        "tvg_name": "è´µå·ç»æµå¹¿æ­",
+                        "province": "è´µå·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gzjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è´µå·ææ¸¸å¹¿æ­",
+                        "tvg_name": "è´µå·ææ¸¸å¹¿æ­",
+                        "province": "è´µå·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gzlygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è´µå·é³ä¹å¹¿æ­",
+                        "tvg_name": "è´µå·é³ä¹å¹¿æ­",
+                        "province": "è´µå·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gzyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è´µå·ç»¼åå¹¿æ­",
+                        "tvg_name": "è´µå·ç»¼åå¹¿æ­",
+                        "province": "è´µå·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32gzwxwzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµ·åäº¤éå¹¿æ­",
+                        "tvg_name": "æµ·åäº¤éå¹¿æ­",
+                        "province": "æµ·å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhainjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµ·åæ°é»å¹¿æ­",
+                        "tvg_name": "æµ·åæ°é»å¹¿æ­",
+                        "province": "æµ·å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhainxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµ·åé³ä¹å¹¿æ­",
+                        "tvg_name": "æµ·åé³ä¹å¹¿æ­",
+                        "province": "æµ·å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhainyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åäº¤éå¹¿æ­",
+                        "tvg_name": "æ²³åäº¤éå¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhebjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åç»æµå¹¿æ­",
+                        "tvg_name": "æ²³åç»æµå¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhebjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åçæ´»å¹¿æ­",
+                        "tvg_name": "æ²³åçæ´»å¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhebshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åæèºå¹¿æ­",
+                        "tvg_name": "æ²³åæèºå¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhebwygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åé³ä¹å¹¿æ­",
+                        "tvg_name": "æ²³åé³ä¹å¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhebyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åç»¼åå¹¿æ­",
+                        "tvg_name": "æ²³åç»¼åå¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhebzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åç»æµå¹¿æ­",
+                        "tvg_name": "æ²³åç»æµå¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhnjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åææ¸¸å¹¿æ­",
+                        "tvg_name": "æ²³åææ¸¸å¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhnlygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³ååæå¹¿æ­",
+                        "tvg_name": "æ²³ååæå¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhnncgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åææ²å¹¿æ­",
+                        "tvg_name": "æ²³åææ²å¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhnxqgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åæ°é»å¹¿æ­",
+                        "tvg_name": "æ²³åæ°é»å¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhnxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ²³åä¿¡æ¯å¹¿æ­",
+                        "tvg_name": "æ²³åä¿¡æ¯å¹¿æ­",
+                        "province": "æ²³å",
+                        "url": "https://satellitepull.cnr.cn/live/wxhnxxgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±ç±å®¶è°é¢",
+                        "tvg_name": "é»é¾æ±ç±å®¶è°é¢",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljajgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±æé²è¯­",
+                        "tvg_name": "é»é¾æ±æé²è¯­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljcygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±é«æ ¡å¹¿æ­",
+                        "tvg_name": "é»é¾æ±é«æ ¡å¹¿æ­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljgxgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±äº¤éå¹¿æ­",
+                        "tvg_name": "é»é¾æ±äº¤éå¹¿æ­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±å¥³æ§å¹¿æ­",
+                        "tvg_name": "é»é¾æ±å¥³æ§å¹¿æ­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljnxgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±ç§å®¶è½¦",
+                        "tvg_name": "é»é¾æ±ç§å®¶è½¦",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljsjcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±ä¹¡æå¹¿æ­",
+                        "tvg_name": "é»é¾æ±ä¹¡æå¹¿æ­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljxcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±æ°é»å¹¿æ­",
+                        "tvg_name": "é»é¾æ±æ°é»å¹¿æ­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é»é¾æ±é³ä¹å¹¿æ­",
+                        "tvg_name": "é»é¾æ±é³ä¹å¹¿æ­",
+                        "province": "é»é¾æ±",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hljyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¥å¤©äº¤éå¹¿æ­",
+                        "tvg_name": "æ¥å¤©äº¤éå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubctjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¥å¤©é³ä¹å¹¿æ­",
+                        "tvg_name": "æ¥å¤©é³ä¹å¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubctyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åå¦å¥³å¿ç«¥",
+                        "tvg_name": "æ¹åå¦å¥³å¿ç«¥",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubfnetgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åäº¤éå¹¿æ­",
+                        "tvg_name": "æ¹åäº¤éå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åç»å¸é³ä¹",
+                        "tvg_name": "æ¹åç»å¸é³ä¹",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åç»æµå¹¿æ­",
+                        "tvg_name": "æ¹åç»æµå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹ååæå¹¿æ­",
+                        "tvg_name": "æ¹ååæå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubncgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åçæ´»å¹¿æ­",
+                        "tvg_name": "æ¹åçæ´»å¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubczshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åèµè®¯å¹¿æ­",
+                        "tvg_name": "æ¹åèµè®¯å¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubzxgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åä¹å£°",
+                        "tvg_name": "æ¹åä¹å£°",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hubzsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åäº¤éå¹¿æ­",
+                        "tvg_name": "æ¹åäº¤éå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hunjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åéé¹°ä¹å£°",
+                        "tvg_name": "æ¹åéé¹°ä¹å£°",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32955/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åç»æµå¹¿æ­",
+                        "tvg_name": "æ¹åç»æµå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hunjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åå¹´ä»£é³ä¹å°",
+                        "tvg_name": "æ¹åå¹´ä»£é³ä¹å°",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hunlygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åæèºå¹¿æ­",
+                        "tvg_name": "æ¹åæèºå¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hunwygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åæ½æ¹ä¹å£°",
+                        "tvg_name": "æ¹åæ½æ¹ä¹å£°",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hunyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¹åæ°é»å¹¿æ­",
+                        "tvg_name": "æ¹åæ°é»å¹¿æ­",
+                        "province": "æ¹å",
+                        "url": "https://satellitepull.cnr.cn/live/wx32hunxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åæäº¤éå¹¿æ­",
+                        "tvg_name": "åæäº¤éå¹¿æ­",
+                        "province": "åæ",
+                        "url": "https://satellitepull.cnr.cn/live/wxjljtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åæç»æµå¹¿æ­",
+                        "tvg_name": "åæç»æµå¹¿æ­",
+                        "province": "åæ",
+                        "url": "https://satellitepull.cnr.cn/live/wxjljjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åæä¹¡æå¹¿æ­",
+                        "tvg_name": "åæä¹¡æå¹¿æ­",
+                        "province": "åæ",
+                        "url": "https://satellitepull.cnr.cn/live/wxjlxcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åææ°é»ç»¼å",
+                        "tvg_name": "åææ°é»ç»¼å",
+                        "province": "åæ",
+                        "url": "https://satellitepull.cnr.cn/live/wxjlxwzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å»¶è¾¹æèºå¹¿æ­",
+                        "tvg_name": "å»¶è¾¹æèºå¹¿æ­",
+                        "province": "åæ",
+                        "url": "https://satellitepull.cnr.cn/live/wxybwyshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å»¶è¾¹æ°é»å¹¿æ­",
+                        "tvg_name": "å»¶è¾¹æ°é»å¹¿æ­",
+                        "province": "åæ",
+                        "url": "https://satellitepull.cnr.cn/live/wxybxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èè´¢ç»å¹¿æ­",
+                        "tvg_name": "æ±èè´¢ç»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jscjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èæäºå¹¿æ­",
+                        "tvg_name": "æ±èæäºå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsgsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èå¥åº·å¹¿æ­",
+                        "tvg_name": "æ±èå¥åº·å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsjkgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èäº¤éå¹¿æ­",
+                        "tvg_name": "æ±èäº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èééµä¹å£°",
+                        "tvg_name": "æ±èééµä¹å£°",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsqctp/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èç»å¸æµè¡é³ä¹",
+                        "tvg_name": "æ±èç»å¸æµè¡é³ä¹",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsjdlxyy/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èæèºå¹¿æ­",
+                        "tvg_name": "æ±èæèºå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jswygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èæ°é»å¹¿æ­",
+                        "tvg_name": "æ±èæ°é»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èæ°é»ç»¼å",
+                        "tvg_name": "æ±èæ°é»ç»¼å",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsxwzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ±èé³ä¹å¹¿æ­",
+                        "tvg_name": "æ±èé³ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "https://satellitepull.cnr.cn/live/wx32jsyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åäº¬æ°é»ç»¼åå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.ximalaya.com/radio-first-page-app/live/68/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "106.9"
+                                    }
+                        },
+                        "tvg_name": "åäº¬æ°é»ç»¼åå¹¿æ­"
+            },
+            {
+                        "name": "åäº¬ç»æµå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.ximalaya.com/radio-first-page-app/live/69/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "105.5"
+                                    }
+                        },
+                        "tvg_name": "åäº¬ç»æµå¹¿æ­"
+            },
+            {
+                        "name": "åäº¬äº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.ximalaya.com/radio-first-page-app/live/70/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "102.4"
+                                    }
+                        },
+                        "tvg_name": "åäº¬äº¤éå¹¿æ­"
+            },
+            {
+                        "name": "åäº¬é³ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.ximalaya.com/radio-first-page-app/live/71/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "åäº¬": "105.8"
+                                    }
+                        },
+                        "tvg_name": "åäº¬é³ä¹å¹¿æ­"
+            },
+            {
+                        "name": "åäº¬å¨±ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/62628.m3u8",
+                        "freq": {},
+                        "tvg_name": "åäº¬å¨±ä¹å¹¿æ­"
+            },
+            {
+                        "name": "èå·æ°é»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/63/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "èå·": "91.1"
+                                    }
+                        },
+                        "tvg_name": "èå·æ°é»å¹¿æ­"
+            },
+            {
+                        "name": "èå·äº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/64/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "èå·": "104.8"
+                                    }
+                        },
+                        "tvg_name": "èå·äº¤éå¹¿æ­"
+            },
+            {
+                        "name": "èå·é³ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/65/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "èå·": "94.8"
+                                    }
+                        },
+                        "tvg_name": "èå·é³ä¹å¹¿æ­"
+            },
+            {
+                        "name": "èå·å¿ç«¥å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/66/64.m3u8",
+                        "freq": {},
+                        "tvg_name": "èå·å¿ç«¥å¹¿æ­"
+            },
+            {
+                        "name": "èå·çæ´»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/573/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "èå·": "96.5"
+                                    }
+                        },
+                        "tvg_name": "èå·çæ´»å¹¿æ­"
+            },
+            {
+                        "name": "èå·ææ²å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/576/64.m3u8",
+                        "freq": {
+                                    "am": {
+                                                "èå·": "846"
+                                    }
+                        },
+                        "tvg_name": "èå·ææ²å¹¿æ­"
+            },
+            {
+                        "name": "æ é¡æ°é»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2777.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "æ é¡": "93.7"
+                                    }
+                        },
+                        "tvg_name": "æ é¡æ°é»å¹¿æ­"
+            },
+            {
+                        "name": "æ é¡ç»æµå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2778.m3u8",
+                        "freq": {},
+                        "tvg_name": "æ é¡ç»æµå¹¿æ­"
+            },
+            {
+                        "name": "æ é¡æ±½è½¦é³ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2779.m3u8",
+                        "freq": {},
+                        "tvg_name": "æ é¡æ±½è½¦é³ä¹å¹¿æ­"
+            },
+            {
+                        "name": "æ é¡äº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2780.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "æ é¡": "106.9"
+                                    }
+                        },
+                        "tvg_name": "æ é¡äº¤éå¹¿æ­"
+            },
+            {
+                        "name": "æ é¡æ¢æºªä¹å£°",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2782.m3u8",
+                        "freq": {},
+                        "tvg_name": "æ é¡æ¢æºªä¹å£°"
+            },
+            {
+                        "name": "æ é¡é½å¸çæ´»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2783.m3u8",
+                        "freq": {},
+                        "tvg_name": "æ é¡é½å¸çæ´»å¹¿æ­"
+            },
+            {
+                        "name": "å¸¸å·æ°é»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2798.m3u8",
+                        "freq": {},
+                        "tvg_name": "å¸¸å·æ°é»å¹¿æ­"
+            },
+            {
+                        "name": "å¸¸å·äº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2796.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "å¸¸å·": "90.0"
+                                    }
+                        },
+                        "tvg_name": "å¸¸å·äº¤éå¹¿æ­"
+            },
+            {
+                        "name": "å¸¸å·è´¢å¯çæ´»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2794.m3u8",
+                        "freq": {},
+                        "tvg_name": "å¸¸å·è´¢å¯çæ´»å¹¿æ­"
+            },
+            {
+                        "name": "å¸¸å·ç±å¬é³ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2799.m3u8",
+                        "freq": {},
+                        "tvg_name": "å¸¸å·ç±å¬é³ä¹å¹¿æ­"
+            },
+            {
+                        "name": "åéæ°é»å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/739/64.m3u8",
+                        "freq": {},
+                        "tvg_name": "åéæ°é»å¹¿æ­"
+            },
+            {
+                        "name": "åéäº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/741/64.m3u8",
+                        "freq": {},
+                        "tvg_name": "åéäº¤éå¹¿æ­"
+            },
+            {
+                        "name": "åéé³ä¹å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://live.xmcdn.com/live/742/64.m3u8",
+                        "freq": {},
+                        "tvg_name": "åéé³ä¹å¹¿æ­"
+            },
+            {
+                        "name": "åéç§å®¶è½¦å¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/1738915.m3u8",
+                        "freq": {},
+                        "tvg_name": "åéç§å®¶è½¦å¹¿æ­"
+            },
+            {
+                        "name": "æ¬å·äº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/2804.m3u8",
+                        "freq": {},
+                        "tvg_name": "æ¬å·äº¤éå¹¿æ­"
+            },
+            {
+                        "name": "å¾å·æ°é»ç»¼åå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/4922.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "å¾å·": "93.0"
+                                    }
+                        },
+                        "tvg_name": "å¾å·æ°é»ç»¼åå¹¿æ­"
+            },
+            {
+                        "name": "çåäº¤éå¹¿æ­",
+                        "province": "æ±è",
+                        "url": "http://ls.qingting.fm/live/5019.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "çå": "105.3"
+                                    }
+                        },
+                        "tvg_name": "çåäº¤éå¹¿æ­"
+            },
+            {
+                        "name": "è¾½å®äº¤éå¹¿æ­",
+                        "tvg_name": "è¾½å®äº¤éå¹¿æ­",
+                        "province": "è¾½å®",
+                        "url": "https://satellitepull.cnr.cn/live/wxlnjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¾½å®ç»æµå¹¿æ­",
+                        "tvg_name": "è¾½å®ç»æµå¹¿æ­",
+                        "province": "è¾½å®",
+                        "url": "https://satellitepull.cnr.cn/live/wxlnjjtb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¾½å®æèºå¹¿æ­",
+                        "tvg_name": "è¾½å®æèºå¹¿æ­",
+                        "province": "è¾½å®",
+                        "url": "https://satellitepull.cnr.cn/live/wxlnwygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¾½å®ä¹¡æå¹¿æ­",
+                        "tvg_name": "è¾½å®ä¹¡æå¹¿æ­",
+                        "province": "è¾½å®",
+                        "url": "https://satellitepull.cnr.cn/live/wxlnxcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¾½å®ä¹å£°",
+                        "tvg_name": "è¾½å®ä¹å£°",
+                        "province": "è¾½å®",
+                        "url": "https://satellitepull.cnr.cn/live/wxlnzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åèå¤æ±è¯­å¹¿æ­",
+                        "tvg_name": "åèå¤æ±è¯­å¹¿æ­",
+                        "province": "åèå¤",
+                        "url": "https://satellitepull.cnr.cn/live/wx32nmghyzhxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åèå¤äº¤éä¹å£°",
+                        "tvg_name": "åèå¤äº¤éä¹å£°",
+                        "province": "åèå¤",
+                        "url": "https://satellitepull.cnr.cn/live/wx32nmgjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åèå¤ç»æµçæ´»",
+                        "tvg_name": "åèå¤ç»æµçæ´»",
+                        "province": "åèå¤",
+                        "url": "https://satellitepull.cnr.cn/live/wx32nmgjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åèå¤ç»¿éä¹å£°",
+                        "tvg_name": "åèå¤ç»¿éä¹å£°",
+                        "province": "åèå¤",
+                        "url": "https://satellitepull.cnr.cn/live/wx32nmglyzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åèå¤è¯ä¹¦æ²èº",
+                        "tvg_name": "åèå¤è¯ä¹¦æ²èº",
+                        "province": "åèå¤",
+                        "url": "https://satellitepull.cnr.cn/live/wx32nmgpsqy/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åèå¤é³ä¹ä¹å£°",
+                        "tvg_name": "åèå¤é³ä¹ä¹å£°",
+                        "province": "åèå¤",
+                        "url": "https://satellitepull.cnr.cn/live/wx32nmgyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¤é½å¸å¹¿æ­",
+                        "tvg_name": "å®å¤é½å¸å¹¿æ­",
+                        "province": "å®å¤",
+                        "url": "https://satellitepull.cnr.cn/live/wxnxdsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¤ç»æµå¹¿æ­",
+                        "tvg_name": "å®å¤ç»æµå¹¿æ­",
+                        "province": "å®å¤",
+                        "url": "https://satellitepull.cnr.cn/live/wxnxjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¤ææ¸¸å¹¿æ­",
+                        "tvg_name": "å®å¤ææ¸¸å¹¿æ­",
+                        "province": "å®å¤",
+                        "url": "https://satellitepull.cnr.cn/live/wxnxdsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¤æ°é»å¹¿æ­",
+                        "tvg_name": "å®å¤æ°é»å¹¿æ­",
+                        "province": "å®å¤",
+                        "url": "https://satellitepull.cnr.cn/live/wxnxxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å®å¤é³ä¹å¹¿æ­",
+                        "tvg_name": "å®å¤é³ä¹å¹¿æ­",
+                        "province": "å®å¤",
+                        "url": "https://satellitepull.cnr.cn/live/wxnxyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éæµ·äº¤éé³ä¹",
+                        "tvg_name": "éæµ·äº¤éé³ä¹",
+                        "province": "éæµ·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32qhjtyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éæµ·ç»æµå¹¿æ­",
+                        "tvg_name": "éæµ·ç»æµå¹¿æ­",
+                        "province": "éæµ·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32qhjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éæµ·ä¹å£°",
+                        "tvg_name": "éæµ·ä¹å£°",
+                        "province": "éæµ·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32qhwxzhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸äº¤éå¹¿æ­",
+                        "tvg_name": "å±±ä¸äº¤éå¹¿æ­",
+                        "province": "å±±ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxsdjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸ç»å¸é³ä¹",
+                        "tvg_name": "å±±ä¸ç»å¸é³ä¹",
+                        "province": "å±±ä¸",
+                        "url": "https://audiolive302.iqilu.com/sdradioShenghuo/sdradio04/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸ç»æµå¹¿æ­",
+                        "tvg_name": "å±±ä¸ç»æµå¹¿æ­",
+                        "province": "å±±ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxsdjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸ä½è²ä¼é²",
+                        "tvg_name": "å±±ä¸ä½è²ä¼é²",
+                        "province": "å±±ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxsdtyxxgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸æèºå¹¿æ­",
+                        "tvg_name": "å±±ä¸æèºå¹¿æ­",
+                        "province": "å±±ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxsdwyssgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸ä¹¡æå¹¿æ­",
+                        "tvg_name": "å±±ä¸ä¹¡æå¹¿æ­",
+                        "province": "å±±ä¸",
+                        "url": "https://satellitepull.cnr.cn/live/wxsdxcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±ä¸é³ä¹å¹¿æ­",
+                        "tvg_name": "å±±ä¸é³ä¹å¹¿æ­",
+                        "province": "å±±ä¸",
+                        "url": "https://audiolive302.iqilu.com/sdradioYinyue/sdradio07/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "å±±è¥¿ç»¼åå¹¿æ­",
+                        "tvg_name": "å±±è¥¿ç»¼åå¹¿æ­",
+                        "province": "å±±è¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxssxxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿é½å¸å¹¿æ­",
+                        "tvg_name": "éè¥¿é½å¸å¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxdsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿äº¤éå¹¿æ­",
+                        "tvg_name": "éè¥¿äº¤éå¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿ç»æµå¹¿æ­",
+                        "tvg_name": "éè¥¿ç»æµå¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿åæå¹¿æ­",
+                        "tvg_name": "éè¥¿åæå¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxncgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿éæ¥å¹¿æ­",
+                        "tvg_name": "éè¥¿éæ¥å¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxqcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿ææ²å¹¿æ­",
+                        "tvg_name": "éè¥¿ææ²å¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxxqgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿æ°é»å¹¿æ­",
+                        "tvg_name": "éè¥¿æ°é»å¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "éè¥¿é³ä¹å¹¿æ­",
+                        "tvg_name": "éè¥¿é³ä¹å¹¿æ­",
+                        "province": "éè¥¿",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ä¸æµ·ä¸æ¹å¹¿æ­",
+                        "tvg_name": "ä¸æµ·ä¸æ¹å¹¿æ­",
+                        "province": "ä¸æµ·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32dfgbdt/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ä¸æµ·æ°é»å¹¿æ­",
+                        "tvg_name": "ä¸æµ·æ°é»å¹¿æ­",
+                        "province": "ä¸æµ·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32shrmgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "ç¬¬ä¸è´¢ç»å¹¿æ­",
+                        "tvg_name": "ç¬¬ä¸è´¢ç»å¹¿æ­",
+                        "province": "ä¸æµ·",
+                        "url": "https://satellitepull.cnr.cn/live/wx32dycjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·åå¸ä¹é³",
+                        "tvg_name": "åå·åå¸ä¹é³",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxsccszs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·äº¤éå¹¿æ­",
+                        "tvg_name": "åå·äº¤éå¹¿æ­",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxscjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·ç»æµå¹¿æ­",
+                        "tvg_name": "åå·ç»æµå¹¿æ­",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxscjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·æ°æé¢ç",
+                        "tvg_name": "åå·æ°æé¢ç",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxscmzgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·å²·æ±é³ä¹",
+                        "tvg_name": "åå·å²·æ±é³ä¹",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxscmjyyt/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·ç§å®¶è½¦925",
+                        "tvg_name": "åå·ç§å®¶è½¦925",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxsc925/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·æèºå¹¿æ­",
+                        "tvg_name": "åå·æèºå¹¿æ­",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxscwygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·æ°é»é¢ç",
+                        "tvg_name": "åå·æ°é»é¢ç",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxsclyshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åå·ç»¼åå¹¿æ­",
+                        "tvg_name": "åå·ç»¼åå¹¿æ­",
+                        "province": "åå·",
+                        "url": "https://satellitepull.cnr.cn/live/wxsczhgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¥¿èé½å¸çæ´»",
+                        "tvg_name": "è¥¿èé½å¸çæ´»",
+                        "province": "è¥¿è",
+                        "url": "https://satellitepull.cnr.cn/live/wxxzdsshgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¥¿èå¯¹å¤äº¤é",
+                        "tvg_name": "è¥¿èå¯¹å¤äº¤é",
+                        "province": "è¥¿è",
+                        "url": "https://satellitepull.cnr.cn/live/wxxzdwjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "è¥¿èæ±è¯­å¹¿æ­",
+                        "tvg_name": "è¥¿èæ±è¯­å¹¿æ­",
+                        "province": "è¥¿è",
+                        "url": "https://satellitepull.cnr.cn/live/wxxzhygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "åµå¢ç»¼åå¹¿æ­",
+                        "tvg_name": "åµå¢ç»¼åå¹¿æ­",
+                        "province": "æ°ç",
+                        "url": "https://satellitepull.cnr.cn/live/wxbtzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ°çäº¤éå¹¿æ­",
+                        "tvg_name": "æ°çäº¤éå¹¿æ­",
+                        "province": "æ°ç",
+                        "url": "https://satellitepull.cnr.cn/live/wxxjjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ°çç»¿è²å¹¿æ­",
+                        "tvg_name": "æ°çç»¿è²å¹¿æ­",
+                        "province": "æ°ç",
+                        "url": "https://satellitepull.cnr.cn/live/wxxjlsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ°çç§å®¶è½¦å¹¿æ­",
+                        "tvg_name": "æ°çç§å®¶è½¦å¹¿æ­",
+                        "province": "æ°ç",
+                        "url": "https://satellitepull.cnr.cn/live/wxxjsjcgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ°çæ°é»å¹¿æ­",
+                        "tvg_name": "æ°çæ°é»å¹¿æ­",
+                        "province": "æ°ç",
+                        "url": "https://satellitepull.cnr.cn/live/wxxjxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "é¦æ ¼éæä¹å£°",
+                        "tvg_name": "é¦æ ¼éæä¹å£°",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxxgllzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåäº¤éä¹å£°",
+                        "tvg_name": "äºåäº¤éä¹å£°",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåå½éå¹¿æ­",
+                        "tvg_name": "äºåå½éå¹¿æ­",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynsegb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåæè²å¹¿æ­",
+                        "tvg_name": "äºåæè²å¹¿æ­",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynjygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåç»æµå¹¿æ­",
+                        "tvg_name": "äºåç»æµå¹¿æ­",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåæ°æå¹¿æ­",
+                        "tvg_name": "äºåæ°æå¹¿æ­",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynmzgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåæ°é»å¹¿æ­",
+                        "tvg_name": "äºåæ°é»å¹¿æ­",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynxwgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "äºåé³ä¹å¹¿æ­",
+                        "tvg_name": "äºåé³ä¹å¹¿æ­",
+                        "province": "äºå",
+                        "url": "https://satellitepull.cnr.cn/live/wxynyygb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±åå¸ä¹å£°",
+                        "tvg_name": "æµæ±åå¸ä¹å£°",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzjcszs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±äº¤éä¹å£°",
+                        "tvg_name": "æµæ±äº¤éä¹å£°",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzjjtgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±ç»æµå¹¿æ­",
+                        "tvg_name": "æµæ±ç»æµå¹¿æ­",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzjjjgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±æ°ç996",
+                        "tvg_name": "æµæ±æ°ç996",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzjmsgb/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±å¥³ä¸»æ­çµå°",
+                        "tvg_name": "æµæ±å¥³ä¸»æ­çµå°",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzj1045/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±æ¦å¨ä¹é³",
+                        "tvg_name": "æµæ±æ¦å¨ä¹é³",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzj968/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æµæ±ä¹å£°",
+                        "tvg_name": "æµæ±ä¹å£°",
+                        "province": "æµæ±",
+                        "url": "https://satellitepull.cnr.cn/live/wxzjzs/playlist.m3u8",
+                        "freq": {}
+            },
+            {
+                        "name": "æ¯æ¥æ­æ²",
+                        "tvg_name": "æ¯æ¥æ­æ²",
+                        "province": "æå¥¥",
+                        "url": "https://lhttp.qingting.fm/live/5021381/64k.mp3",
+                        "freq": {}
+            }
+];
+
+// åå§å
+let currentStation = null;
+let allProvinces = [...new Set(STATIONS.map(s => s.province))].sort();
+
+// å¡«åçä»½éæ©å¨
+const provFilter = document.getElementById('provFilter');
+allProvinces.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    provFilter.appendChild(opt);
+});
+
+function formatFreq(freq) {
+    if (!freq || Object.keys(freq).length === 0) return '';
+    let parts = [];
+    if (freq.fm) {
+        let cities = Object.entries(freq.fm).slice(0, 6).map(([c, f]) => `<span>${c} FM${f}</span>`).join(' ');
+        parts.push(cities);
+    }
+    if (freq.am) {
+        let ams = Object.entries(freq.am).map(([c, f]) => `<span>${c} AM${f}</span>`).join(' ');
+        parts.push(ams);
+    }
+    return parts.join(' | ');
+}
+
+function renderStations(stations) {
+    const grid = document.getElementById('stationGrid');
+    const noResult = document.getElementById('noResult');
+    const stats = document.getElementById('stats');
+    
+    stats.textContent = `å± ${stations.length} ä¸ªçµå°`;
+    
+    if (stations.length === 0) {
+        grid.innerHTML = '';
+        noResult.style.display = 'block';
+        return;
+    }
+    
+    noResult.style.display = 'none';
+    grid.innerHTML = stations.map(s => {
+        const freqHtml = formatFreq(s.freq);
+        return `
+            <div class="card ${currentStation && currentStation.url === s.url ? 'active' : ''}" 
+                 onclick="playStation('${s.name.replace(/'/g, "\'")}', '${s.province.replace(/'/g, "\'")}', '${s.url.replace(/'/g, "\'")}', this)">
+                <div class="card-name">${s.name}</div>
+                <div class="card-prov">${s.province}</div>
+                ${freqHtml ? '<div class="card-freq">' + freqHtml + '</div>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function filterStations() {
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+    const prov = document.getElementById('provFilter').value;
+    
+    let filtered = STATIONS;
+    
+    if (prov) {
+        filtered = filtered.filter(s => s.province === prov);
+    }
+    
+    if (search) {
+        filtered = filtered.filter(s => {
+            // æåç§°æç´¢
+            if (s.name.toLowerCase().includes(search)) return true;
+            if (s.tvg_name && s.tvg_name.toLowerCase().includes(search)) return true;
+            // æé¢çæç´¢
+            if (s.freq && s.freq.fm) {
+                for (let [city, f] of Object.entries(s.freq.fm)) {
+                    if (f.includes(search) || city.includes(search)) return true;
+                }
+            }
+            if (s.freq && s.freq.am) {
+                for (let [area, f] of Object.entries(s.freq.am)) {
+                    if (f.includes(search)) return true;
+                }
+            }
+            return false;
+        });
+    }
+    
+    // æ»å°ææåï¼å¶ä»æçä»½æ
+    filtered.sort((a, b) => {
+        if (a.province === 'æ»å°' && b.province !== 'æ»å°') return -1;
+        if (a.province !== 'æ»å°' && b.province === 'æ»å°') return 1;
+        return a.province.localeCompare(b.province) || a.name.localeCompare(b.name);
+    });
+    
+    renderStations(filtered);
+}
+
+function playStation(name, province, url, cardEl) {
+    const player = document.getElementById('audioPlayer');
+    const playingName = document.getElementById('playingName');
+    const playingProv = document.getElementById('playingProv');
+    const playingStatus = document.getElementById('playingStatus');
+    
+    // æ´æ° UI
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    if (cardEl) cardEl.classList.add('active');
+    
+    playingName.textContent = name;
+    playingProv.textContent = province;
+    playingStatus.textContent = 'å è½½ä¸­...';
+    currentStation = { name, province, url };
+    
+    // ä½¿ç¨ HLS.js æç´æ¥æ­æ¾
+    if (url.endsWith('.m3u8')) {
+        // å¨æå è½½ HLS.js
+        if (!window.Hls) {
+            playingStatus.textContent = 'å è½½æ­æ¾å¨...';
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+            script.onload = () => startHLS(url);
+            script.onerror = () => tryDirectPlay(url);
+            document.head.appendChild(script);
+        } else {
+            startHLS(url);
+        }
+    } else {
+        player.src = url;
+        player.load();
+        player.play().then(() => {
+            playingStatus.textContent = 'æ­£å¨æ­æ¾';
+        }).catch(e => {
+            playingStatus.textContent = 'æ­æ¾å¤±è´¥: ' + e.message;
+        });
+    }
+}
+
+function startHLS(url) {
+    const player = document.getElementById('audioPlayer');
+    const playingStatus = document.getElementById('playingStatus');
+    
+    // åæ¸çä¸ä¸ä¸ªå®ä¾
+    if (player._hls) {
+        player._hls.destroy();
+        player._hls = null;
+    }
+    player.src = '';
+    
+    if (Hls.isSupported()) {
+        const hls = new Hls({
+            autoStartLoad: true,
+            startPosition: -1,
+            debug: false,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            manifestLoadingTimeOut: 15000,
+            manifestLoadingMaxRetry: 3,
+            levelLoadingTimeOut: 15000,
+            levelLoadingMaxRetry: 3,
+            fragLoadingTimeOut: 20000,
+            fragLoadingMaxRetry: 6
+        });
+        
+        hls.loadSource(url);
+        hls.attachMedia(player);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            player.play().then(() => {
+                playingStatus.textContent = 'æ­£å¨æ­æ¾';
+            }).catch(e => {
+                playingStatus.textContent = 'ç¹å»æ­æ¾æé®å¼å§';
+            });
+        });
+        
+        // éè´å½éè¯¯èªå¨æ¢å¤
+        hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        playingStatus.textContent = 'ç½ç»ä¸­æ­ï¼å°è¯æ¢å¤...';
+                        hls.startLoad();
+                        break;
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        playingStatus.textContent = 'åªä½éè¯¯ï¼å°è¯æ¢å¤...';
+                        hls.recoverMediaError();
+                        break;
+                    default:
+                        playingStatus.textContent = 'æ­æ¾å¤±è´¥ï¼åæ¢ç´è¿æ¨¡å¼...';
+                        hls.destroy();
+                        tryDirectPlay(url);
+                        break;
+                }
+            }
+        });
+        
+        player._hls = hls;
+    } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+        tryDirectPlay(url);
+    } else {
+        playingStatus.textContent = 'æµè§å¨ä¸æ¯ææ­æ¾æ­¤æ ¼å¼';
+    }
+}
+
+// çå¬ audio åç´ çä¸­æ­äºä»¶
+document.getElementById('audioPlayer').addEventListener('stalled', () => {
+    const player = document.getElementById('audioPlayer');
+    const playingStatus = document.getElementById('playingStatus');
+    playingStatus.textContent = 'ç¼å²ä¸­...';
+    // å°è¯æ¢å¤
+    if (player._hls) {
+        player._hls.startLoad();
+    }
+});
+
+document.getElementById('audioPlayer').addEventListener('playing', () => {
+    document.getElementById('playingStatus').textContent = 'æ­£å¨æ­æ¾';
+});
+
+document.getElementById('audioPlayer').addEventListener('waiting', () => {
+    document.getElementById('playingStatus').textContent = 'å è½½ä¸­...';
+});
+
+function tryDirectPlay(url) {
+    const player = document.getElementById('audioPlayer');
+    const playingStatus = document.getElementById('playingStatus');
+    player.src = url;
+    player.load();
+    player.play().then(() => {
+        playingStatus.textContent = 'æ­£å¨æ­æ¾';
+    }).catch(e => {
+        playingStatus.textContent = 'æ­æ¾åé»ï¼å¯å°è¯å³é®æ°æ ç­¾æå¼';
+    });
+}
+
+function stopPlaying() {
+    const player = document.getElementById('audioPlayer');
+    const playingName = document.getElementById('playingName');
+    const playingProv = document.getElementById('playingProv');
+    const playingStatus = document.getElementById('playingStatus');
+    
+    if (player._hls) {
+        player._hls.destroy();
+        player._hls = null;
+    }
+    player.pause();
+    player.src = '';
+    playingName.textContent = 'æªéæ©çµå°';
+    playingProv.textContent = '';
+    playingStatus.textContent = '';
+    currentStation = null;
+    
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+}
+
+// åå§æ¸²æ
+filterStations();
+
+// é®çå¿«æ·é®
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') stopPlaying();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});
+</script>
+</body>
+</html>
