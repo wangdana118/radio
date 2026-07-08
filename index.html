@@ -78,7 +78,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft Ya
 
 <div class="footer">
     数据来源：央广/各省广播电视台公开流媒体 | 实时流可能因网络波动暂不可用
+    <br><span id="visitCount" style="margin-top:4px;display:inline-block">访问人数加载中...</span>
 </div>
+
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<script>
+// 不蒜子计数器
+setTimeout(function(){
+    var pv = document.getElementById('busuanzi_value_site_pv');
+    var uv = document.getElementById('busuanzi_value_site_uv');
+    var el = document.getElementById('visitCount');
+    if(pv && uv && pv.textContent){
+        el.innerHTML = '👁 页面访问 ' + pv.textContent + ' 次 | 独立访客 ' + uv.textContent + ' 人';
+    } else {
+        el.innerHTML = '计数加载中，请稍候...';
+    }
+}, 3000);
+</script>
+<span id="busuanzi_container_site_pv" style="display:none"><span id="busuanzi_value_site_pv"></span></span>
+<span id="busuanzi_container_site_uv" style="display:none"><span id="busuanzi_value_site_uv"></span></span>
 
 <audio id="audioPlayer" class="audio-hidden" controls></audio>
 
