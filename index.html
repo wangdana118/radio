@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>å¨å½çµå°èå - å®æ¶æ¶å¬</title>
+<title>全国电台聚合 - 实时收听</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
@@ -46,1838 +46,1838 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft Ya
 <body>
 
 <div class="header">
-    <h1>å¨å½çµå°èå</h1>
-    <div class="sub">æç´¢é¢çï¼å®æ¶æ¶å¬å¨æ­èç®</div>
+    <h1>全国电台聚合</h1>
+    <div class="sub">搜索频率，实时收听在播节目</div>
     <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="æç´¢çµå°åç§°ãé¢çï¼å¦ 106.1ãäº¤éãé³ä¹ï¼..." oninput="filterStations()">
+        <input type="text" id="searchInput" placeholder="搜索电台名称、频率（如 106.1、交通、音乐）..." oninput="filterStations()">
         <select id="provFilter" onchange="filterStations()">
-            <option value="">å¨é¨çä»½</option>
+            <option value="">全部省份</option>
         </select>
     </div>
 </div>
 
 <div class="player-bar" id="playerBar">
     <div class="now-playing">
-        <span id="playingName" class="name">æªéæ©çµå°</span>
+        <span id="playingName" class="name">未选择电台</span>
         <span id="playingProv" class="prov"></span>
     </div>
     <span class="status" id="playingStatus"></span>
-    <button class="stop-btn" onclick="stopPlaying()">åæ­¢</button>
+    <button class="stop-btn" onclick="stopPlaying()">停止</button>
 </div>
 
-<div class="stats" id="stats">å± 0 ä¸ªçµå°</div>
+<div class="stats" id="stats">共 0 个电台</div>
 
 <div class="main">
     <div class="grid" id="stationGrid"></div>
 </div>
 
 <div class="notice" id="noResult" style="display:none">
-    <div class="icon">ð»</div>
-    <div>æ²¡æå¹éççµå°</div>
+    <div class="icon">📻</div>
+    <div>没有匹配的电台</div>
 </div>
 
 <div class="footer">
-    æ°æ®æ¥æºï¼å¤®å¹¿/åçå¹¿æ­çµè§å°å¬å¼æµåªä½ | å®æ¶æµå¯è½å ç½ç»æ³¢å¨æä¸å¯ç¨
+    数据来源：央广/各省广播电视台公开流媒体 | 实时流可能因网络波动暂不可用
 </div>
 
 <audio id="audioPlayer" class="audio-hidden" controls></audio>
 
 <script>
-// çµå°æ°æ®
+// 电台数据
 const STATIONS = [
             {
-                        "name": "å¤§æ¹¾åºä¹å£°",
-                        "tvg_name": "å¤§æ¹¾åºä¹å£°",
-                        "province": "æ»å°",
+                        "name": "大湾区之声",
+                        "tvg_name": "大湾区之声",
+                        "province": "总台",
                         "url": "https://ngcdn007.cnr.cn/live/hxzs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç»å¸é³ä¹",
-                        "tvg_name": "ç»å¸é³ä¹",
-                        "province": "æ»å°",
+                        "name": "经典音乐",
+                        "tvg_name": "经典音乐",
+                        "province": "总台",
                         "url": "https://ngcdn004.cnr.cn/live/dszs/index.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "101.8"
+                                                "北京": "101.8"
                                     }
                         }
             },
             {
-                        "name": "ç»æµä¹å£°",
-                        "tvg_name": "ç»æµä¹å£°",
-                        "province": "æ»å°",
+                        "name": "经济之声",
+                        "tvg_name": "经济之声",
+                        "province": "总台",
                         "url": "https://ngcdn002.cnr.cn/live/jjzs/index.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "96.6",
-                                                "ä¸æµ·": "91.4",
-                                                "å¹¿å·": "106.6",
-                                                "æ­¦æ±": "102.6",
-                                                "éå·": "103.2",
-                                                "æé½": "94.0",
-                                                "å¤©æ´¥": "98.0",
-                                                "å¤§è¿": "104.3",
-                                                "åäº¬": "102.4"
+                                                "北京": "96.6",
+                                                "上海": "91.4",
+                                                "广州": "106.6",
+                                                "武汉": "102.6",
+                                                "郑州": "103.2",
+                                                "成都": "94.0",
+                                                "天津": "98.0",
+                                                "大连": "104.3",
+                                                "南京": "102.4"
                                     },
                                     "am": {
-                                                "å¨å½": "630/720/855"
+                                                "全国": "630/720/855"
                                     }
                         }
             },
             {
-                        "name": "èå¹´ä¹å£°",
-                        "tvg_name": "èå¹´ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "老年之声",
+                        "tvg_name": "老年之声",
+                        "province": "总台",
                         "url": "https://ngcdn011.cnr.cn/live/lnzs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ°æä¹å£°",
-                        "tvg_name": "æ°æä¹å£°",
-                        "province": "æ»å°",
+                        "name": "民族之声",
+                        "tvg_name": "民族之声",
+                        "province": "总台",
                         "url": "https://ngcdn009.cnr.cn/live/mzzs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åæµ·ä¹å£°",
-                        "tvg_name": "åæµ·ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "南海之声",
+                        "tvg_name": "南海之声",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/nhzs.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¥å·ä¹å£°",
-                        "tvg_name": "ç¥å·ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "神州之声",
+                        "tvg_name": "神州之声",
+                        "province": "总台",
                         "url": "https://ngcdn006.cnr.cn/live/szzs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æèºä¹å£°",
-                        "tvg_name": "æèºä¹å£°",
-                        "province": "æ»å°",
+                        "name": "文艺之声",
+                        "tvg_name": "文艺之声",
+                        "province": "总台",
                         "url": "https://ngcdn010.cnr.cn/live/wyzs/index.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "106.6"
+                                                "北京": "106.6"
                                     }
                         }
             },
             {
-                        "name": "é¦æ¸¯ä¹å£°",
-                        "tvg_name": "é¦æ¸¯ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "香港之声",
+                        "tvg_name": "香港之声",
+                        "province": "总台",
                         "url": "https://ngcdn008.cnr.cn/live/xgzs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é³ä¹ä¹å£°",
-                        "tvg_name": "é³ä¹ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "音乐之声",
+                        "tvg_name": "音乐之声",
+                        "province": "总台",
                         "url": "https://ngcdn003.cnr.cn/live/yyzs/index.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "90.0",
-                                                "ä¸æµ·": "107.7",
-                                                "å¹¿å·": "87.4",
-                                                "é¿æ²": "90.1",
-                                                "æ²é³": "99.8",
-                                                "å¤©æ´¥": "92.5",
-                                                "æé½": "103.5",
-                                                "åäº¬": "98.9"
+                                                "北京": "90.0",
+                                                "上海": "107.7",
+                                                "广州": "87.4",
+                                                "长沙": "90.1",
+                                                "沈阳": "99.8",
+                                                "天津": "92.5",
+                                                "成都": "103.5",
+                                                "南京": "98.9"
                                     },
                                     "am": {
-                                                "å¨å½": "747"
+                                                "全国": "747"
                                     }
                         }
             },
             {
-                        "name": "éè¯»ä¹å£°",
-                        "tvg_name": "éè¯»ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "阅读之声",
+                        "tvg_name": "阅读之声",
+                        "province": "总台",
                         "url": "https://ngcdn014.cnr.cn/live/ylgb/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ä¸­å½ä¹å£°",
-                        "tvg_name": "ä¸­å½ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "中国之声",
+                        "tvg_name": "中国之声",
+                        "province": "总台",
                         "url": "https://ngcdn001.cnr.cn/live/zgzs/index.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "106.1",
-                                                "ä¸æµ·": "99.0",
-                                                "å¹¿å·": "89.3",
-                                                "æé½": "87.2",
-                                                "æ­å·": "90.2",
-                                                "æµå": "87.2",
-                                                "éå·": "101.2",
-                                                "è¥¿å®": "96.4",
-                                                "å¤©æ´¥": "102.9",
-                                                "æ²é³": "94.8",
-                                                "æ­¦æ±": "95.6",
-                                                "é¿æ²": "103.2",
-                                                "åå°æ»¨": "94.6",
-                                                "ææ": "100.8",
-                                                "éåº": "95.2"
+                                                "北京": "106.1",
+                                                "上海": "99.0",
+                                                "广州": "89.3",
+                                                "成都": "87.2",
+                                                "杭州": "90.2",
+                                                "济南": "87.2",
+                                                "郑州": "101.2",
+                                                "西安": "96.4",
+                                                "天津": "102.9",
+                                                "沈阳": "94.8",
+                                                "武汉": "95.6",
+                                                "长沙": "103.2",
+                                                "哈尔滨": "94.6",
+                                                "昆明": "100.8",
+                                                "重庆": "95.2"
                                     },
                                     "am": {
-                                                "å¨å½": "639/981"
+                                                "全国": "639/981"
                                     }
                         }
             },
             {
-                        "name": "å°æµ·ä¹å£°",
-                        "tvg_name": "å°æµ·ä¹å£°",
-                        "province": "æ»å°",
+                        "name": "台海之声",
+                        "tvg_name": "台海之声",
+                        "province": "总台",
                         "url": "https://ngcdn005.cnr.cn/live/zhzs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ä¸­å½äº¤éå¹¿æ­",
-                        "tvg_name": "ä¸­å½äº¤éå¹¿æ­",
-                        "province": "æ»å°",
+                        "name": "中国交通广播",
+                        "tvg_name": "中国交通广播",
+                        "province": "总台",
                         "url": "https://ngcdn016.cnr.cn/live/gsgljtgb/index.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "99.6",
-                                                "å¤©æ´¥": "99.6",
-                                                "æ²³å": "101.2"
+                                                "北京": "99.6",
+                                                "天津": "99.6",
+                                                "河北": "101.2"
                                     }
                         }
             },
             {
-                        "name": "ä¸­å½ä¹¡æä¹å£°",
-                        "tvg_name": "ä¸­å½ä¹¡æä¹å£°",
-                        "province": "æ»å°",
+                        "name": "中国乡村之声",
+                        "tvg_name": "中国乡村之声",
+                        "province": "总台",
                         "url": "https://ngcdn017.cnr.cn/live/xczs/index.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åè¯­ç¯ç",
-                        "tvg_name": "åè¯­ç¯ç",
-                        "province": "æ»å°",
+                        "name": "华语环球",
+                        "tvg_name": "华语环球",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/hyhq.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¯çèµè®¯",
-                        "tvg_name": "ç¯çèµè®¯",
-                        "province": "æ»å°",
+                        "name": "环球资讯",
+                        "tvg_name": "环球资讯",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/905.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è½»æ¾è°é¢",
-                        "tvg_name": "è½»æ¾è°é¢",
-                        "province": "æ»å°",
+                        "name": "轻松调频",
+                        "tvg_name": "轻松调频",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/915.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ä¸çåå£°",
-                        "tvg_name": "ä¸çåå£°",
-                        "province": "æ»å°",
+                        "name": "世界华声",
+                        "tvg_name": "世界华声",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/hxfh.m3u8",
                         "freq": {}
             },
             {
                         "name": "China Plus Radio",
                         "tvg_name": "China Plus Radio",
-                        "province": "æ»å°",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/am846.m3u8",
                         "freq": {}
             },
             {
-                        "name": "HITFMå½éæµè¡é³ä¹",
-                        "tvg_name": "HITFMå½éæµè¡é³ä¹",
-                        "province": "æ»å°",
+                        "name": "HITFM国际流行音乐",
+                        "tvg_name": "HITFM国际流行音乐",
+                        "province": "总台",
                         "url": "https://sk.cri.cn/887.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±è¥¿é½å¸å¹¿æ­",
-                        "tvg_name": "æ±è¥¿é½å¸å¹¿æ­",
-                        "province": "æ±è¥¿",
+                        "name": "江西都市广播",
+                        "tvg_name": "江西都市广播",
+                        "province": "江西",
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxdsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±è¥¿äº¤éå¹¿æ­",
-                        "tvg_name": "æ±è¥¿äº¤éå¹¿æ­",
-                        "province": "æ±è¥¿",
+                        "name": "江西交通广播",
+                        "tvg_name": "江西交通广播",
+                        "province": "江西",
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±è¥¿æ°çå¹¿æ­",
-                        "tvg_name": "æ±è¥¿æ°çå¹¿æ­",
-                        "province": "æ±è¥¿",
+                        "name": "江西民生广播",
+                        "tvg_name": "江西民生广播",
+                        "province": "江西",
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxmsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±è¥¿åæå¹¿æ­",
-                        "tvg_name": "æ±è¥¿åæå¹¿æ­",
-                        "province": "æ±è¥¿",
+                        "name": "江西农村广播",
+                        "tvg_name": "江西农村广播",
+                        "province": "江西",
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxncgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±è¥¿é³ä¹å¹¿æ­",
-                        "tvg_name": "æ±è¥¿é³ä¹å¹¿æ­",
-                        "province": "æ±è¥¿",
+                        "name": "江西音乐广播",
+                        "tvg_name": "江西音乐广播",
+                        "province": "江西",
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±è¥¿æ°é»å¹¿æ­",
-                        "tvg_name": "æ±è¥¿æ°é»å¹¿æ­",
-                        "province": "æ±è¥¿",
+                        "name": "江西新闻广播",
+                        "tvg_name": "江西新闻广播",
+                        "province": "江西",
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½å°è¯´è¯ä¹¦",
-                        "tvg_name": "å®å¾½å°è¯´è¯ä¹¦",
-                        "province": "å®å¾½",
+                        "name": "安徽小说评书",
+                        "tvg_name": "安徽小说评书",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahxspsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½äº¤éå¹¿æ­",
-                        "tvg_name": "å®å¾½äº¤éå¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽交通广播",
+                        "tvg_name": "安徽交通广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½ç»æµå¹¿æ­",
-                        "tvg_name": "å®å¾½ç»æµå¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽经济广播",
+                        "tvg_name": "安徽经济广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½ææ¸¸å¹¿æ­",
-                        "tvg_name": "å®å¾½ææ¸¸å¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽旅游广播",
+                        "tvg_name": "安徽旅游广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahlygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½åæå¹¿æ­",
-                        "tvg_name": "å®å¾½åæå¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽农村广播",
+                        "tvg_name": "安徽农村广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahncgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½çæ´»å¹¿æ­",
-                        "tvg_name": "å®å¾½çæ´»å¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽生活广播",
+                        "tvg_name": "安徽生活广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½ææ²å¹¿æ­",
-                        "tvg_name": "å®å¾½ææ²å¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽戏曲广播",
+                        "tvg_name": "安徽戏曲广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahxqgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½é³ä¹å¹¿æ­",
-                        "tvg_name": "å®å¾½é³ä¹å¹¿æ­",
-                        "province": "å®å¾½",
+                        "name": "安徽音乐广播",
+                        "tvg_name": "安徽音乐广播",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¾½ä¹å£°",
-                        "tvg_name": "å®å¾½ä¹å£°",
-                        "province": "å®å¾½",
+                        "name": "安徽之声",
+                        "tvg_name": "安徽之声",
+                        "province": "安徽",
                         "url": "https://satellitepull.cnr.cn/live/wxahxxgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åäº¬åå¸å¹¿æ­",
-                        "tvg_name": "åäº¬åå¸å¹¿æ­",
-                        "province": "åäº¬",
+                        "name": "北京城市广播",
+                        "tvg_name": "北京城市广播",
+                        "province": "北京",
                         "url": "https://satellitepull.cnr.cn/live/wxbjcsfwgl/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åäº¬äº¤éå¹¿æ­",
-                        "tvg_name": "åäº¬äº¤éå¹¿æ­",
-                        "province": "åäº¬",
+                        "name": "北京交通广播",
+                        "tvg_name": "北京交通广播",
+                        "province": "北京",
                         "url": "https://cnlive.cnr.cn/hls/bjjtgb.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åäº¬æ°é»å¹¿æ­",
-                        "tvg_name": "åäº¬æ°é»å¹¿æ­",
-                        "province": "åäº¬",
+                        "name": "北京新闻广播",
+                        "tvg_name": "北京新闻广播",
+                        "province": "北京",
                         "url": "https://satellitepull.cnr.cn/live/wxbjxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åäº¬é³ä¹å¹¿æ­",
-                        "tvg_name": "åäº¬é³ä¹å¹¿æ­",
-                        "province": "åäº¬",
+                        "name": "北京音乐广播",
+                        "tvg_name": "北京音乐广播",
+                        "province": "北京",
                         "url": "https://cnlive.cnr.cn/hls/bjyygb.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éåºé½å¸å¹¿æ­",
-                        "tvg_name": "éåºé½å¸å¹¿æ­",
-                        "province": "éåº",
+                        "name": "重庆都市广播",
+                        "tvg_name": "重庆都市广播",
+                        "province": "重庆",
                         "url": "https://satellitepull.cnr.cn/live/wxcqdsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éåºäº¤éå¹¿æ­",
-                        "tvg_name": "éåºäº¤éå¹¿æ­",
-                        "province": "éåº",
+                        "name": "重庆交通广播",
+                        "tvg_name": "重庆交通广播",
+                        "province": "重庆",
                         "url": "https://satellitepull.cnr.cn/live/wxcqjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éåºç»æµå¹¿æ­",
-                        "tvg_name": "éåºç»æµå¹¿æ­",
-                        "province": "éåº",
+                        "name": "重庆经济广播",
+                        "tvg_name": "重庆经济广播",
+                        "province": "重庆",
                         "url": "https://satellitepull.cnr.cn/live/wxcqjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éåºæèºå¹¿æ­",
-                        "tvg_name": "éåºæèºå¹¿æ­",
-                        "province": "éåº",
+                        "name": "重庆文艺广播",
+                        "tvg_name": "重庆文艺广播",
+                        "province": "重庆",
                         "url": "https://satellitepull.cnr.cn/live/wxcqwygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éåºæ°é»å¹¿æ­",
-                        "tvg_name": "éåºæ°é»å¹¿æ­",
-                        "province": "éåº",
+                        "name": "重庆新闻广播",
+                        "tvg_name": "重庆新闻广播",
+                        "province": "重庆",
                         "url": "https://satellitepull.cnr.cn/live/wxcqxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éåºé³ä¹å¹¿æ­",
-                        "tvg_name": "éåºé³ä¹å¹¿æ­",
-                        "province": "éåº",
+                        "name": "重庆音乐广播",
+                        "tvg_name": "重庆音乐广播",
+                        "province": "重庆",
                         "url": "https://satellitepull.cnr.cn/live/wxcqyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¦å»ºä¸åå¹¿æ­",
-                        "tvg_name": "ç¦å»ºä¸åå¹¿æ­",
-                        "province": "ç¦å»º",
+                        "name": "福建东南广播",
+                        "tvg_name": "福建东南广播",
+                        "province": "福建",
                         "url": "https://satellitepull.cnr.cn/live/wx32fjdngb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¦å»ºé½å¸å¹¿æ­",
-                        "tvg_name": "ç¦å»ºé½å¸å¹¿æ­",
-                        "province": "ç¦å»º",
+                        "name": "福建都市广播",
+                        "tvg_name": "福建都市广播",
+                        "province": "福建",
                         "url": "https://satellitepull.cnr.cn/live/wx32fjdndsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¦å»ºäº¤éå¹¿æ­",
-                        "tvg_name": "ç¦å»ºäº¤éå¹¿æ­",
-                        "province": "ç¦å»º",
+                        "name": "福建交通广播",
+                        "tvg_name": "福建交通广播",
+                        "province": "福建",
                         "url": "https://satellitepull.cnr.cn/live/wx32fjdnjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¦å»ºè´¢ç»961",
-                        "tvg_name": "ç¦å»ºè´¢ç»961",
-                        "province": "ç¦å»º",
+                        "name": "福建财经961",
+                        "tvg_name": "福建财经961",
+                        "province": "福建",
                         "url": "https://satellitepull.cnr.cn/live/wx32fjdnjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¦å»ºæ±½è½¦é³ä¹",
-                        "tvg_name": "ç¦å»ºæ±½è½¦é³ä¹",
-                        "province": "ç¦å»º",
+                        "name": "福建汽车音乐",
+                        "tvg_name": "福建汽车音乐",
+                        "province": "福建",
                         "url": "https://satellitepull.cnr.cn/live/wx32fjdnyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¦å»ºæ°é»å¹¿æ­",
-                        "tvg_name": "ç¦å»ºæ°é»å¹¿æ­",
-                        "province": "ç¦å»º",
+                        "name": "福建新闻广播",
+                        "tvg_name": "福建新闻广播",
+                        "province": "福建",
                         "url": "https://satellitepull.cnr.cn/live/wx32fjxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "çèé½å¸è°é¢",
-                        "tvg_name": "çèé½å¸è°é¢",
-                        "province": "çè",
+                        "name": "甘肃都市调频",
+                        "tvg_name": "甘肃都市调频",
+                        "province": "甘肃",
                         "url": "https://satellitepull.cnr.cn/live/wxgsdstb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "çèé»æ²³ä¹å£°",
-                        "tvg_name": "çèé»æ²³ä¹å£°",
-                        "province": "çè",
+                        "name": "甘肃黄河之声",
+                        "tvg_name": "甘肃黄河之声",
+                        "province": "甘肃",
                         "url": "https://satellitepull.cnr.cn/live/wxgshhzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "çèäº¤éå¹¿æ­",
-                        "tvg_name": "çèäº¤éå¹¿æ­",
-                        "province": "çè",
+                        "name": "甘肃交通广播",
+                        "tvg_name": "甘肃交通广播",
+                        "province": "甘肃",
                         "url": "https://satellitepull.cnr.cn/live/wxgsjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "çèåæå¹¿æ­",
-                        "tvg_name": "çèåæå¹¿æ­",
-                        "province": "çè",
+                        "name": "甘肃农村广播",
+                        "tvg_name": "甘肃农村广播",
+                        "province": "甘肃",
                         "url": "https://satellitepull.cnr.cn/live/wxgsncgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "çèéæ¥è°é¢",
-                        "tvg_name": "çèéæ¥è°é¢",
-                        "province": "çè",
+                        "name": "甘肃青春调频",
+                        "tvg_name": "甘肃青春调频",
+                        "province": "甘肃",
                         "url": "https://satellitepull.cnr.cn/live/wxgsqcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "çèæ°é»ç»¼å",
-                        "tvg_name": "çèæ°é»ç»¼å",
-                        "province": "çè",
+                        "name": "甘肃新闻综合",
+                        "tvg_name": "甘肃新闻综合",
+                        "province": "甘肃",
                         "url": "https://satellitepull.cnr.cn/live/wxgsxwzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿ä¸åå¸ä¹å£°",
-                        "tvg_name": "å¹¿ä¸åå¸ä¹å£°",
-                        "province": "å¹¿ä¸",
+                        "name": "广东城市之声",
+                        "tvg_name": "广东城市之声",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdcszs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿ä¸è¡å¸å¹¿æ­",
-                        "tvg_name": "å¹¿ä¸è¡å¸å¹¿æ­",
-                        "province": "å¹¿ä¸",
+                        "name": "广东股市广播",
+                        "tvg_name": "广东股市广播",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdgsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿ä¸åç²¤ä¹å£°",
-                        "tvg_name": "å¹¿ä¸åç²¤ä¹å£°",
-                        "province": "å¹¿ä¸",
+                        "name": "广东南粤之声",
+                        "tvg_name": "广东南粤之声",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxnyzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿ä¸æä½å¹¿æ­",
-                        "tvg_name": "å¹¿ä¸æä½å¹¿æ­",
-                        "province": "å¹¿ä¸",
+                        "name": "广东文体广播",
+                        "tvg_name": "广东文体广播",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdwtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿ä¸æ°é»å¹¿æ­",
-                        "tvg_name": "å¹¿ä¸æ°é»å¹¿æ­",
-                        "province": "å¹¿ä¸",
+                        "name": "广东新闻广播",
+                        "tvg_name": "广东新闻广播",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿ä¸é³ä¹ä¹å£°",
-                        "tvg_name": "å¹¿ä¸é³ä¹ä¹å£°",
-                        "province": "å¹¿ä¸",
+                        "name": "广东音乐之声",
+                        "tvg_name": "广东音乐之声",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdyyzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åæ¹çæ´»å¹¿æ­",
-                        "tvg_name": "åæ¹çæ´»å¹¿æ­",
-                        "province": "å¹¿ä¸",
+                        "name": "南方生活广播",
+                        "tvg_name": "南方生活广播",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdnfshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ·±å³é£æ¬971",
-                        "tvg_name": "æ·±å³é£æ¬971",
-                        "province": "å¹¿ä¸",
+                        "name": "深圳飞扬971",
+                        "tvg_name": "深圳飞扬971",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxszfy971/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ·±å³äº¤éé¢ç",
-                        "tvg_name": "æ·±å³äº¤éé¢ç",
-                        "province": "å¹¿ä¸",
+                        "name": "深圳交通频率",
+                        "tvg_name": "深圳交通频率",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxszjjpl/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ·±å³ç§å®¶è½¦",
-                        "tvg_name": "æ·±å³ç§å®¶è½¦",
-                        "province": "å¹¿ä¸",
+                        "name": "深圳私家车",
+                        "tvg_name": "深圳私家车",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxszsjcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¾åäº¤éå¹¿æ­",
-                        "tvg_name": "ç¾åäº¤éå¹¿æ­",
-                        "province": "å¹¿ä¸",
+                        "name": "羊城交通广播",
+                        "tvg_name": "羊城交通广播",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdycjtt/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç æ±ç»æµå°",
-                        "tvg_name": "ç æ±ç»æµå°",
-                        "province": "å¹¿ä¸",
+                        "name": "珠江经济台",
+                        "tvg_name": "珠江经济台",
+                        "province": "广东",
                         "url": "https://satellitepull.cnr.cn/live/wxgdzjjjt/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿è¥¿å¯¹å¤å¹¿æ­",
-                        "tvg_name": "å¹¿è¥¿å¯¹å¤å¹¿æ­",
-                        "province": "å¹¿è¥¿",
+                        "name": "广西对外广播",
+                        "tvg_name": "广西对外广播",
+                        "province": "广西",
                         "url": "https://satellitepull.cnr.cn/live/wx32gxdwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿è¥¿äº¤éå¹¿æ­",
-                        "tvg_name": "å¹¿è¥¿äº¤éå¹¿æ­",
-                        "province": "å¹¿è¥¿",
+                        "name": "广西交通广播",
+                        "tvg_name": "广西交通广播",
+                        "province": "广西",
                         "url": "https://satellitepull.cnr.cn/live/wx32gxjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿è¥¿æè²çæ´»",
-                        "tvg_name": "å¹¿è¥¿æè²çæ´»",
-                        "province": "å¹¿è¥¿",
+                        "name": "广西教育生活",
+                        "tvg_name": "广西教育生活",
+                        "province": "广西",
                         "url": "https://satellitepull.cnr.cn/live/wx32gbjyshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿è¥¿ç»æµå¹¿æ­",
-                        "tvg_name": "å¹¿è¥¿ç»æµå¹¿æ­",
-                        "province": "å¹¿è¥¿",
+                        "name": "广西经济广播",
+                        "tvg_name": "广西经济广播",
+                        "province": "广西",
                         "url": "https://satellitepull.cnr.cn/live/wx32gxjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿è¥¿äººæ°å¹¿æ­",
-                        "tvg_name": "å¹¿è¥¿äººæ°å¹¿æ­",
-                        "province": "å¹¿è¥¿",
+                        "name": "广西人民广播",
+                        "tvg_name": "广西人民广播",
+                        "province": "广西",
                         "url": "https://satellitepull.cnr.cn/live/wx32gxrmgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å¹¿è¥¿æèºå¹¿æ­",
-                        "tvg_name": "å¹¿è¥¿æèºå¹¿æ­",
-                        "province": "å¹¿è¥¿",
+                        "name": "广西文艺广播",
+                        "tvg_name": "广西文艺广播",
+                        "province": "广西",
                         "url": "https://satellitepull.cnr.cn/live/wx32gxwygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è´µå·é½å¸å¹¿æ­",
-                        "tvg_name": "è´µå·é½å¸å¹¿æ­",
-                        "province": "è´µå·",
+                        "name": "贵州都市广播",
+                        "tvg_name": "贵州都市广播",
+                        "province": "贵州",
                         "url": "https://satellitepull.cnr.cn/live/wx32gzqcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è´µå·æäºå¹¿æ­",
-                        "tvg_name": "è´µå·æäºå¹¿æ­",
-                        "province": "è´µå·",
+                        "name": "贵州故事广播",
+                        "tvg_name": "贵州故事广播",
+                        "province": "贵州",
                         "url": "https://satellitepull.cnr.cn/live/wx32gzgsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è´µå·ç»æµå¹¿æ­",
-                        "tvg_name": "è´µå·ç»æµå¹¿æ­",
-                        "province": "è´µå·",
+                        "name": "贵州经济广播",
+                        "tvg_name": "贵州经济广播",
+                        "province": "贵州",
                         "url": "https://satellitepull.cnr.cn/live/wx32gzjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è´µå·ææ¸¸å¹¿æ­",
-                        "tvg_name": "è´µå·ææ¸¸å¹¿æ­",
-                        "province": "è´µå·",
+                        "name": "贵州旅游广播",
+                        "tvg_name": "贵州旅游广播",
+                        "province": "贵州",
                         "url": "https://satellitepull.cnr.cn/live/wx32gzlygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è´µå·é³ä¹å¹¿æ­",
-                        "tvg_name": "è´µå·é³ä¹å¹¿æ­",
-                        "province": "è´µå·",
+                        "name": "贵州音乐广播",
+                        "tvg_name": "贵州音乐广播",
+                        "province": "贵州",
                         "url": "https://satellitepull.cnr.cn/live/wx32gzyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è´µå·ç»¼åå¹¿æ­",
-                        "tvg_name": "è´µå·ç»¼åå¹¿æ­",
-                        "province": "è´µå·",
+                        "name": "贵州综合广播",
+                        "tvg_name": "贵州综合广播",
+                        "province": "贵州",
                         "url": "https://satellitepull.cnr.cn/live/wx32gzwxwzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµ·åäº¤éå¹¿æ­",
-                        "tvg_name": "æµ·åäº¤éå¹¿æ­",
-                        "province": "æµ·å",
+                        "name": "海南交通广播",
+                        "tvg_name": "海南交通广播",
+                        "province": "海南",
                         "url": "https://satellitepull.cnr.cn/live/wxhainjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµ·åæ°é»å¹¿æ­",
-                        "tvg_name": "æµ·åæ°é»å¹¿æ­",
-                        "province": "æµ·å",
+                        "name": "海南新闻广播",
+                        "tvg_name": "海南新闻广播",
+                        "province": "海南",
                         "url": "https://satellitepull.cnr.cn/live/wxhainxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµ·åé³ä¹å¹¿æ­",
-                        "tvg_name": "æµ·åé³ä¹å¹¿æ­",
-                        "province": "æµ·å",
+                        "name": "海南音乐广播",
+                        "tvg_name": "海南音乐广播",
+                        "province": "海南",
                         "url": "https://satellitepull.cnr.cn/live/wxhainyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åäº¤éå¹¿æ­",
-                        "tvg_name": "æ²³åäº¤éå¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河北交通广播",
+                        "tvg_name": "河北交通广播",
+                        "province": "河北",
                         "url": "https://satellitepull.cnr.cn/live/wxhebjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åç»æµå¹¿æ­",
-                        "tvg_name": "æ²³åç»æµå¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河北经济广播",
+                        "tvg_name": "河北经济广播",
+                        "province": "河北",
                         "url": "https://satellitepull.cnr.cn/live/wxhebjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åçæ´»å¹¿æ­",
-                        "tvg_name": "æ²³åçæ´»å¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河北生活广播",
+                        "tvg_name": "河北生活广播",
+                        "province": "河北",
                         "url": "https://satellitepull.cnr.cn/live/wxhebshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åæèºå¹¿æ­",
-                        "tvg_name": "æ²³åæèºå¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河北文艺广播",
+                        "tvg_name": "河北文艺广播",
+                        "province": "河北",
                         "url": "https://satellitepull.cnr.cn/live/wxhebwygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åé³ä¹å¹¿æ­",
-                        "tvg_name": "æ²³åé³ä¹å¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河北音乐广播",
+                        "tvg_name": "河北音乐广播",
+                        "province": "河北",
                         "url": "https://satellitepull.cnr.cn/live/wxhebyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åç»¼åå¹¿æ­",
-                        "tvg_name": "æ²³åç»¼åå¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河北综合广播",
+                        "tvg_name": "河北综合广播",
+                        "province": "河北",
                         "url": "https://satellitepull.cnr.cn/live/wxhebzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åç»æµå¹¿æ­",
-                        "tvg_name": "æ²³åç»æµå¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河南经济广播",
+                        "tvg_name": "河南经济广播",
+                        "province": "河南",
                         "url": "https://satellitepull.cnr.cn/live/wxhnjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åææ¸¸å¹¿æ­",
-                        "tvg_name": "æ²³åææ¸¸å¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河南旅游广播",
+                        "tvg_name": "河南旅游广播",
+                        "province": "河南",
                         "url": "https://satellitepull.cnr.cn/live/wxhnlygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³ååæå¹¿æ­",
-                        "tvg_name": "æ²³ååæå¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河南农村广播",
+                        "tvg_name": "河南农村广播",
+                        "province": "河南",
                         "url": "https://satellitepull.cnr.cn/live/wxhnncgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åææ²å¹¿æ­",
-                        "tvg_name": "æ²³åææ²å¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河南戏曲广播",
+                        "tvg_name": "河南戏曲广播",
+                        "province": "河南",
                         "url": "https://satellitepull.cnr.cn/live/wxhnxqgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åæ°é»å¹¿æ­",
-                        "tvg_name": "æ²³åæ°é»å¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河南新闻广播",
+                        "tvg_name": "河南新闻广播",
+                        "province": "河南",
                         "url": "https://satellitepull.cnr.cn/live/wxhnxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ²³åä¿¡æ¯å¹¿æ­",
-                        "tvg_name": "æ²³åä¿¡æ¯å¹¿æ­",
-                        "province": "æ²³å",
+                        "name": "河南信息广播",
+                        "tvg_name": "河南信息广播",
+                        "province": "河南",
                         "url": "https://satellitepull.cnr.cn/live/wxhnxxgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±ç±å®¶è°é¢",
-                        "tvg_name": "é»é¾æ±ç±å®¶è°é¢",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江爱家调频",
+                        "tvg_name": "黑龙江爱家调频",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljajgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±æé²è¯­",
-                        "tvg_name": "é»é¾æ±æé²è¯­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江朝鲜语",
+                        "tvg_name": "黑龙江朝鲜语",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljcygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±é«æ ¡å¹¿æ­",
-                        "tvg_name": "é»é¾æ±é«æ ¡å¹¿æ­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江高校广播",
+                        "tvg_name": "黑龙江高校广播",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljgxgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±äº¤éå¹¿æ­",
-                        "tvg_name": "é»é¾æ±äº¤éå¹¿æ­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江交通广播",
+                        "tvg_name": "黑龙江交通广播",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±å¥³æ§å¹¿æ­",
-                        "tvg_name": "é»é¾æ±å¥³æ§å¹¿æ­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江女性广播",
+                        "tvg_name": "黑龙江女性广播",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljnxgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±ç§å®¶è½¦",
-                        "tvg_name": "é»é¾æ±ç§å®¶è½¦",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江私家车",
+                        "tvg_name": "黑龙江私家车",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljsjcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±ä¹¡æå¹¿æ­",
-                        "tvg_name": "é»é¾æ±ä¹¡æå¹¿æ­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江乡村广播",
+                        "tvg_name": "黑龙江乡村广播",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljxcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±æ°é»å¹¿æ­",
-                        "tvg_name": "é»é¾æ±æ°é»å¹¿æ­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江新闻广播",
+                        "tvg_name": "黑龙江新闻广播",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é»é¾æ±é³ä¹å¹¿æ­",
-                        "tvg_name": "é»é¾æ±é³ä¹å¹¿æ­",
-                        "province": "é»é¾æ±",
+                        "name": "黑龙江音乐广播",
+                        "tvg_name": "黑龙江音乐广播",
+                        "province": "黑龙江",
                         "url": "https://satellitepull.cnr.cn/live/wx32hljyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¥å¤©äº¤éå¹¿æ­",
-                        "tvg_name": "æ¥å¤©äº¤éå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "楚天交通广播",
+                        "tvg_name": "楚天交通广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubctjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¥å¤©é³ä¹å¹¿æ­",
-                        "tvg_name": "æ¥å¤©é³ä¹å¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "楚天音乐广播",
+                        "tvg_name": "楚天音乐广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubctyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åå¦å¥³å¿ç«¥",
-                        "tvg_name": "æ¹åå¦å¥³å¿ç«¥",
-                        "province": "æ¹å",
+                        "name": "湖北妇女儿童",
+                        "tvg_name": "湖北妇女儿童",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubfnetgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åäº¤éå¹¿æ­",
-                        "tvg_name": "æ¹åäº¤éå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖北交通广播",
+                        "tvg_name": "湖北交通广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åç»å¸é³ä¹",
-                        "tvg_name": "æ¹åç»å¸é³ä¹",
-                        "province": "æ¹å",
+                        "name": "湖北经典音乐",
+                        "tvg_name": "湖北经典音乐",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åç»æµå¹¿æ­",
-                        "tvg_name": "æ¹åç»æµå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖北经济广播",
+                        "tvg_name": "湖北经济广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹ååæå¹¿æ­",
-                        "tvg_name": "æ¹ååæå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖北农村广播",
+                        "tvg_name": "湖北农村广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubncgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åçæ´»å¹¿æ­",
-                        "tvg_name": "æ¹åçæ´»å¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖北生活广播",
+                        "tvg_name": "湖北生活广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubczshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åèµè®¯å¹¿æ­",
-                        "tvg_name": "æ¹åèµè®¯å¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖北资讯广播",
+                        "tvg_name": "湖北资讯广播",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubzxgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åä¹å£°",
-                        "tvg_name": "æ¹åä¹å£°",
-                        "province": "æ¹å",
+                        "name": "湖北之声",
+                        "tvg_name": "湖北之声",
+                        "province": "湖北",
                         "url": "https://satellitepull.cnr.cn/live/wx32hubzsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åäº¤éå¹¿æ­",
-                        "tvg_name": "æ¹åäº¤éå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖南交通广播",
+                        "tvg_name": "湖南交通广播",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32hunjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åéé¹°ä¹å£°",
-                        "tvg_name": "æ¹åéé¹°ä¹å£°",
-                        "province": "æ¹å",
+                        "name": "湖南金鹰之声",
+                        "tvg_name": "湖南金鹰之声",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32955/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åç»æµå¹¿æ­",
-                        "tvg_name": "æ¹åç»æµå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖南经济广播",
+                        "tvg_name": "湖南经济广播",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32hunjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åå¹´ä»£é³ä¹å°",
-                        "tvg_name": "æ¹åå¹´ä»£é³ä¹å°",
-                        "province": "æ¹å",
+                        "name": "湖南年代音乐台",
+                        "tvg_name": "湖南年代音乐台",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32hunlygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åæèºå¹¿æ­",
-                        "tvg_name": "æ¹åæèºå¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖南文艺广播",
+                        "tvg_name": "湖南文艺广播",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32hunwygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åæ½æ¹ä¹å£°",
-                        "tvg_name": "æ¹åæ½æ¹ä¹å£°",
-                        "province": "æ¹å",
+                        "name": "湖南潇湘之声",
+                        "tvg_name": "湖南潇湘之声",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32hunyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¹åæ°é»å¹¿æ­",
-                        "tvg_name": "æ¹åæ°é»å¹¿æ­",
-                        "province": "æ¹å",
+                        "name": "湖南新闻广播",
+                        "tvg_name": "湖南新闻广播",
+                        "province": "湖南",
                         "url": "https://satellitepull.cnr.cn/live/wx32hunxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åæäº¤éå¹¿æ­",
-                        "tvg_name": "åæäº¤éå¹¿æ­",
-                        "province": "åæ",
+                        "name": "吉林交通广播",
+                        "tvg_name": "吉林交通广播",
+                        "province": "吉林",
                         "url": "https://satellitepull.cnr.cn/live/wxjljtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åæç»æµå¹¿æ­",
-                        "tvg_name": "åæç»æµå¹¿æ­",
-                        "province": "åæ",
+                        "name": "吉林经济广播",
+                        "tvg_name": "吉林经济广播",
+                        "province": "吉林",
                         "url": "https://satellitepull.cnr.cn/live/wxjljjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åæä¹¡æå¹¿æ­",
-                        "tvg_name": "åæä¹¡æå¹¿æ­",
-                        "province": "åæ",
+                        "name": "吉林乡村广播",
+                        "tvg_name": "吉林乡村广播",
+                        "province": "吉林",
                         "url": "https://satellitepull.cnr.cn/live/wxjlxcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åææ°é»ç»¼å",
-                        "tvg_name": "åææ°é»ç»¼å",
-                        "province": "åæ",
+                        "name": "吉林新闻综合",
+                        "tvg_name": "吉林新闻综合",
+                        "province": "吉林",
                         "url": "https://satellitepull.cnr.cn/live/wxjlxwzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å»¶è¾¹æèºå¹¿æ­",
-                        "tvg_name": "å»¶è¾¹æèºå¹¿æ­",
-                        "province": "åæ",
+                        "name": "延边文艺广播",
+                        "tvg_name": "延边文艺广播",
+                        "province": "吉林",
                         "url": "https://satellitepull.cnr.cn/live/wxybwyshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å»¶è¾¹æ°é»å¹¿æ­",
-                        "tvg_name": "å»¶è¾¹æ°é»å¹¿æ­",
-                        "province": "åæ",
+                        "name": "延边新闻广播",
+                        "tvg_name": "延边新闻广播",
+                        "province": "吉林",
                         "url": "https://satellitepull.cnr.cn/live/wxybxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èè´¢ç»å¹¿æ­",
-                        "tvg_name": "æ±èè´¢ç»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏财经广播",
+                        "tvg_name": "江苏财经广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jscjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èæäºå¹¿æ­",
-                        "tvg_name": "æ±èæäºå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏故事广播",
+                        "tvg_name": "江苏故事广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsgsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èå¥åº·å¹¿æ­",
-                        "tvg_name": "æ±èå¥åº·å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏健康广播",
+                        "tvg_name": "江苏健康广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsjkgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èäº¤éå¹¿æ­",
-                        "tvg_name": "æ±èäº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏交通广播",
+                        "tvg_name": "江苏交通广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èééµä¹å£°",
-                        "tvg_name": "æ±èééµä¹å£°",
-                        "province": "æ±è",
+                        "name": "江苏金陵之声",
+                        "tvg_name": "江苏金陵之声",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsqctp/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èç»å¸æµè¡é³ä¹",
-                        "tvg_name": "æ±èç»å¸æµè¡é³ä¹",
-                        "province": "æ±è",
+                        "name": "江苏经典流行音乐",
+                        "tvg_name": "江苏经典流行音乐",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsjdlxyy/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èæèºå¹¿æ­",
-                        "tvg_name": "æ±èæèºå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏文艺广播",
+                        "tvg_name": "江苏文艺广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jswygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èæ°é»å¹¿æ­",
-                        "tvg_name": "æ±èæ°é»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏新闻广播",
+                        "tvg_name": "江苏新闻广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èæ°é»ç»¼å",
-                        "tvg_name": "æ±èæ°é»ç»¼å",
-                        "province": "æ±è",
+                        "name": "江苏新闻综合",
+                        "tvg_name": "江苏新闻综合",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsxwzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ±èé³ä¹å¹¿æ­",
-                        "tvg_name": "æ±èé³ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "江苏音乐广播",
+                        "tvg_name": "江苏音乐广播",
+                        "province": "江苏",
                         "url": "https://satellitepull.cnr.cn/live/wx32jsyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åäº¬æ°é»ç»¼åå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南京新闻综合广播",
+                        "province": "江苏",
                         "url": "http://live.ximalaya.com/radio-first-page-app/live/68/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "106.9"
+                                                "南京": "106.9"
                                     }
                         },
-                        "tvg_name": "åäº¬æ°é»ç»¼åå¹¿æ­"
+                        "tvg_name": "南京新闻综合广播"
             },
             {
-                        "name": "åäº¬ç»æµå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南京经济广播",
+                        "province": "江苏",
                         "url": "http://live.ximalaya.com/radio-first-page-app/live/69/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "105.5"
+                                                "南京": "105.5"
                                     }
                         },
-                        "tvg_name": "åäº¬ç»æµå¹¿æ­"
+                        "tvg_name": "南京经济广播"
             },
             {
-                        "name": "åäº¬äº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南京交通广播",
+                        "province": "江苏",
                         "url": "http://live.ximalaya.com/radio-first-page-app/live/70/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "102.4"
+                                                "南京": "102.4"
                                     }
                         },
-                        "tvg_name": "åäº¬äº¤éå¹¿æ­"
+                        "tvg_name": "南京交通广播"
             },
             {
-                        "name": "åäº¬é³ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南京音乐广播",
+                        "province": "江苏",
                         "url": "http://live.ximalaya.com/radio-first-page-app/live/71/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "åäº¬": "105.8"
+                                                "南京": "105.8"
                                     }
                         },
-                        "tvg_name": "åäº¬é³ä¹å¹¿æ­"
+                        "tvg_name": "南京音乐广播"
             },
             {
-                        "name": "åäº¬å¨±ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南京娱乐广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/62628.m3u8",
                         "freq": {},
-                        "tvg_name": "åäº¬å¨±ä¹å¹¿æ­"
+                        "tvg_name": "南京娱乐广播"
             },
             {
-                        "name": "èå·æ°é»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "苏州新闻广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/63/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "èå·": "91.1"
+                                                "苏州": "91.1"
                                     }
                         },
-                        "tvg_name": "èå·æ°é»å¹¿æ­"
+                        "tvg_name": "苏州新闻广播"
             },
             {
-                        "name": "èå·äº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "苏州交通广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/64/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "èå·": "104.8"
+                                                "苏州": "104.8"
                                     }
                         },
-                        "tvg_name": "èå·äº¤éå¹¿æ­"
+                        "tvg_name": "苏州交通广播"
             },
             {
-                        "name": "èå·é³ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "苏州音乐广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/65/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "èå·": "94.8"
+                                                "苏州": "94.8"
                                     }
                         },
-                        "tvg_name": "èå·é³ä¹å¹¿æ­"
+                        "tvg_name": "苏州音乐广播"
             },
             {
-                        "name": "èå·å¿ç«¥å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "苏州儿童广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/66/64.m3u8",
                         "freq": {},
-                        "tvg_name": "èå·å¿ç«¥å¹¿æ­"
+                        "tvg_name": "苏州儿童广播"
             },
             {
-                        "name": "èå·çæ´»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "苏州生活广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/573/64.m3u8",
                         "freq": {
                                     "fm": {
-                                                "èå·": "96.5"
+                                                "苏州": "96.5"
                                     }
                         },
-                        "tvg_name": "èå·çæ´»å¹¿æ­"
+                        "tvg_name": "苏州生活广播"
             },
             {
-                        "name": "èå·ææ²å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "苏州戏曲广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/576/64.m3u8",
                         "freq": {
                                     "am": {
-                                                "èå·": "846"
+                                                "苏州": "846"
                                     }
                         },
-                        "tvg_name": "èå·ææ²å¹¿æ­"
+                        "tvg_name": "苏州戏曲广播"
             },
             {
-                        "name": "æ é¡æ°é»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "无锡新闻广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2777.m3u8",
                         "freq": {
                                     "fm": {
-                                                "æ é¡": "93.7"
+                                                "无锡": "93.7"
                                     }
                         },
-                        "tvg_name": "æ é¡æ°é»å¹¿æ­"
+                        "tvg_name": "无锡新闻广播"
             },
             {
-                        "name": "æ é¡ç»æµå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "无锡经济广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2778.m3u8",
                         "freq": {},
-                        "tvg_name": "æ é¡ç»æµå¹¿æ­"
+                        "tvg_name": "无锡经济广播"
             },
             {
-                        "name": "æ é¡æ±½è½¦é³ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "无锡汽车音乐广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2779.m3u8",
                         "freq": {},
-                        "tvg_name": "æ é¡æ±½è½¦é³ä¹å¹¿æ­"
+                        "tvg_name": "无锡汽车音乐广播"
             },
             {
-                        "name": "æ é¡äº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "无锡交通广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2780.m3u8",
                         "freq": {
                                     "fm": {
-                                                "æ é¡": "106.9"
+                                                "无锡": "106.9"
                                     }
                         },
-                        "tvg_name": "æ é¡äº¤éå¹¿æ­"
+                        "tvg_name": "无锡交通广播"
             },
             {
-                        "name": "æ é¡æ¢æºªä¹å£°",
-                        "province": "æ±è",
+                        "name": "无锡梁溪之声",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2782.m3u8",
                         "freq": {},
-                        "tvg_name": "æ é¡æ¢æºªä¹å£°"
+                        "tvg_name": "无锡梁溪之声"
             },
             {
-                        "name": "æ é¡é½å¸çæ´»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "无锡都市生活广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2783.m3u8",
                         "freq": {},
-                        "tvg_name": "æ é¡é½å¸çæ´»å¹¿æ­"
+                        "tvg_name": "无锡都市生活广播"
             },
             {
-                        "name": "å¸¸å·æ°é»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "常州新闻广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2798.m3u8",
                         "freq": {},
-                        "tvg_name": "å¸¸å·æ°é»å¹¿æ­"
+                        "tvg_name": "常州新闻广播"
             },
             {
-                        "name": "å¸¸å·äº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "常州交通广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2796.m3u8",
                         "freq": {
                                     "fm": {
-                                                "å¸¸å·": "90.0"
+                                                "常州": "90.0"
                                     }
                         },
-                        "tvg_name": "å¸¸å·äº¤éå¹¿æ­"
+                        "tvg_name": "常州交通广播"
             },
             {
-                        "name": "å¸¸å·è´¢å¯çæ´»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "常州财富生活广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2794.m3u8",
                         "freq": {},
-                        "tvg_name": "å¸¸å·è´¢å¯çæ´»å¹¿æ­"
+                        "tvg_name": "常州财富生活广播"
             },
             {
-                        "name": "å¸¸å·ç±å¬é³ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "常州爱听音乐广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2799.m3u8",
                         "freq": {},
-                        "tvg_name": "å¸¸å·ç±å¬é³ä¹å¹¿æ­"
+                        "tvg_name": "常州爱听音乐广播"
             },
             {
-                        "name": "åéæ°é»å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南通新闻广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/739/64.m3u8",
                         "freq": {},
-                        "tvg_name": "åéæ°é»å¹¿æ­"
+                        "tvg_name": "南通新闻广播"
             },
             {
-                        "name": "åéäº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南通交通广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/741/64.m3u8",
                         "freq": {},
-                        "tvg_name": "åéäº¤éå¹¿æ­"
+                        "tvg_name": "南通交通广播"
             },
             {
-                        "name": "åéé³ä¹å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南通音乐广播",
+                        "province": "江苏",
                         "url": "http://live.xmcdn.com/live/742/64.m3u8",
                         "freq": {},
-                        "tvg_name": "åéé³ä¹å¹¿æ­"
+                        "tvg_name": "南通音乐广播"
             },
             {
-                        "name": "åéç§å®¶è½¦å¹¿æ­",
-                        "province": "æ±è",
+                        "name": "南通私家车广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/1738915.m3u8",
                         "freq": {},
-                        "tvg_name": "åéç§å®¶è½¦å¹¿æ­"
+                        "tvg_name": "南通私家车广播"
             },
             {
-                        "name": "æ¬å·äº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "扬州交通广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2804.m3u8",
                         "freq": {},
-                        "tvg_name": "æ¬å·äº¤éå¹¿æ­"
+                        "tvg_name": "扬州交通广播"
             },
             {
-                        "name": "å¾å·æ°é»ç»¼åå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "徐州新闻综合广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/4922.m3u8",
                         "freq": {
                                     "fm": {
-                                                "å¾å·": "93.0"
+                                                "徐州": "93.0"
                                     }
                         },
-                        "tvg_name": "å¾å·æ°é»ç»¼åå¹¿æ­"
+                        "tvg_name": "徐州新闻综合广播"
             },
             {
-                        "name": "çåäº¤éå¹¿æ­",
-                        "province": "æ±è",
+                        "name": "盐城交通广播",
+                        "province": "江苏",
                         "url": "http://ls.qingting.fm/live/5019.m3u8",
                         "freq": {
                                     "fm": {
-                                                "çå": "105.3"
+                                                "盐城": "105.3"
                                     }
                         },
-                        "tvg_name": "çåäº¤éå¹¿æ­"
+                        "tvg_name": "盐城交通广播"
             },
             {
-                        "name": "è¾½å®äº¤éå¹¿æ­",
-                        "tvg_name": "è¾½å®äº¤éå¹¿æ­",
-                        "province": "è¾½å®",
+                        "name": "辽宁交通广播",
+                        "tvg_name": "辽宁交通广播",
+                        "province": "辽宁",
                         "url": "https://satellitepull.cnr.cn/live/wxlnjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¾½å®ç»æµå¹¿æ­",
-                        "tvg_name": "è¾½å®ç»æµå¹¿æ­",
-                        "province": "è¾½å®",
+                        "name": "辽宁经济广播",
+                        "tvg_name": "辽宁经济广播",
+                        "province": "辽宁",
                         "url": "https://satellitepull.cnr.cn/live/wxlnjjtb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¾½å®æèºå¹¿æ­",
-                        "tvg_name": "è¾½å®æèºå¹¿æ­",
-                        "province": "è¾½å®",
+                        "name": "辽宁文艺广播",
+                        "tvg_name": "辽宁文艺广播",
+                        "province": "辽宁",
                         "url": "https://satellitepull.cnr.cn/live/wxlnwygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¾½å®ä¹¡æå¹¿æ­",
-                        "tvg_name": "è¾½å®ä¹¡æå¹¿æ­",
-                        "province": "è¾½å®",
+                        "name": "辽宁乡村广播",
+                        "tvg_name": "辽宁乡村广播",
+                        "province": "辽宁",
                         "url": "https://satellitepull.cnr.cn/live/wxlnxcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¾½å®ä¹å£°",
-                        "tvg_name": "è¾½å®ä¹å£°",
-                        "province": "è¾½å®",
+                        "name": "辽宁之声",
+                        "tvg_name": "辽宁之声",
+                        "province": "辽宁",
                         "url": "https://satellitepull.cnr.cn/live/wxlnzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åèå¤æ±è¯­å¹¿æ­",
-                        "tvg_name": "åèå¤æ±è¯­å¹¿æ­",
-                        "province": "åèå¤",
+                        "name": "内蒙古汉语广播",
+                        "tvg_name": "内蒙古汉语广播",
+                        "province": "内蒙古",
                         "url": "https://satellitepull.cnr.cn/live/wx32nmghyzhxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åèå¤äº¤éä¹å£°",
-                        "tvg_name": "åèå¤äº¤éä¹å£°",
-                        "province": "åèå¤",
+                        "name": "内蒙古交通之声",
+                        "tvg_name": "内蒙古交通之声",
+                        "province": "内蒙古",
                         "url": "https://satellitepull.cnr.cn/live/wx32nmgjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åèå¤ç»æµçæ´»",
-                        "tvg_name": "åèå¤ç»æµçæ´»",
-                        "province": "åèå¤",
+                        "name": "内蒙古经济生活",
+                        "tvg_name": "内蒙古经济生活",
+                        "province": "内蒙古",
                         "url": "https://satellitepull.cnr.cn/live/wx32nmgjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åèå¤ç»¿éä¹å£°",
-                        "tvg_name": "åèå¤ç»¿éä¹å£°",
-                        "province": "åèå¤",
+                        "name": "内蒙古绿野之声",
+                        "tvg_name": "内蒙古绿野之声",
+                        "province": "内蒙古",
                         "url": "https://satellitepull.cnr.cn/live/wx32nmglyzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åèå¤è¯ä¹¦æ²èº",
-                        "tvg_name": "åèå¤è¯ä¹¦æ²èº",
-                        "province": "åèå¤",
+                        "name": "内蒙古评书曲艺",
+                        "tvg_name": "内蒙古评书曲艺",
+                        "province": "内蒙古",
                         "url": "https://satellitepull.cnr.cn/live/wx32nmgpsqy/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åèå¤é³ä¹ä¹å£°",
-                        "tvg_name": "åèå¤é³ä¹ä¹å£°",
-                        "province": "åèå¤",
+                        "name": "内蒙古音乐之声",
+                        "tvg_name": "内蒙古音乐之声",
+                        "province": "内蒙古",
                         "url": "https://satellitepull.cnr.cn/live/wx32nmgyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¤é½å¸å¹¿æ­",
-                        "tvg_name": "å®å¤é½å¸å¹¿æ­",
-                        "province": "å®å¤",
+                        "name": "宁夏都市广播",
+                        "tvg_name": "宁夏都市广播",
+                        "province": "宁夏",
                         "url": "https://satellitepull.cnr.cn/live/wxnxdsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¤ç»æµå¹¿æ­",
-                        "tvg_name": "å®å¤ç»æµå¹¿æ­",
-                        "province": "å®å¤",
+                        "name": "宁夏经济广播",
+                        "tvg_name": "宁夏经济广播",
+                        "province": "宁夏",
                         "url": "https://satellitepull.cnr.cn/live/wxnxjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¤ææ¸¸å¹¿æ­",
-                        "tvg_name": "å®å¤ææ¸¸å¹¿æ­",
-                        "province": "å®å¤",
+                        "name": "宁夏旅游广播",
+                        "tvg_name": "宁夏旅游广播",
+                        "province": "宁夏",
                         "url": "https://satellitepull.cnr.cn/live/wxnxdsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¤æ°é»å¹¿æ­",
-                        "tvg_name": "å®å¤æ°é»å¹¿æ­",
-                        "province": "å®å¤",
+                        "name": "宁夏新闻广播",
+                        "tvg_name": "宁夏新闻广播",
+                        "province": "宁夏",
                         "url": "https://satellitepull.cnr.cn/live/wxnxxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å®å¤é³ä¹å¹¿æ­",
-                        "tvg_name": "å®å¤é³ä¹å¹¿æ­",
-                        "province": "å®å¤",
+                        "name": "宁夏音乐广播",
+                        "tvg_name": "宁夏音乐广播",
+                        "province": "宁夏",
                         "url": "https://satellitepull.cnr.cn/live/wxnxyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éæµ·äº¤éé³ä¹",
-                        "tvg_name": "éæµ·äº¤éé³ä¹",
-                        "province": "éæµ·",
+                        "name": "青海交通音乐",
+                        "tvg_name": "青海交通音乐",
+                        "province": "青海",
                         "url": "https://satellitepull.cnr.cn/live/wx32qhjtyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éæµ·ç»æµå¹¿æ­",
-                        "tvg_name": "éæµ·ç»æµå¹¿æ­",
-                        "province": "éæµ·",
+                        "name": "青海经济广播",
+                        "tvg_name": "青海经济广播",
+                        "province": "青海",
                         "url": "https://satellitepull.cnr.cn/live/wx32qhjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éæµ·ä¹å£°",
-                        "tvg_name": "éæµ·ä¹å£°",
-                        "province": "éæµ·",
+                        "name": "青海之声",
+                        "tvg_name": "青海之声",
+                        "province": "青海",
                         "url": "https://satellitepull.cnr.cn/live/wx32qhwxzhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸äº¤éå¹¿æ­",
-                        "tvg_name": "å±±ä¸äº¤éå¹¿æ­",
-                        "province": "å±±ä¸",
+                        "name": "山东交通广播",
+                        "tvg_name": "山东交通广播",
+                        "province": "山东",
                         "url": "https://satellitepull.cnr.cn/live/wxsdjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸ç»å¸é³ä¹",
-                        "tvg_name": "å±±ä¸ç»å¸é³ä¹",
-                        "province": "å±±ä¸",
+                        "name": "山东经典音乐",
+                        "tvg_name": "山东经典音乐",
+                        "province": "山东",
                         "url": "https://audiolive302.iqilu.com/sdradioShenghuo/sdradio04/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸ç»æµå¹¿æ­",
-                        "tvg_name": "å±±ä¸ç»æµå¹¿æ­",
-                        "province": "å±±ä¸",
+                        "name": "山东经济广播",
+                        "tvg_name": "山东经济广播",
+                        "province": "山东",
                         "url": "https://satellitepull.cnr.cn/live/wxsdjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸ä½è²ä¼é²",
-                        "tvg_name": "å±±ä¸ä½è²ä¼é²",
-                        "province": "å±±ä¸",
+                        "name": "山东体育休闲",
+                        "tvg_name": "山东体育休闲",
+                        "province": "山东",
                         "url": "https://satellitepull.cnr.cn/live/wxsdtyxxgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸æèºå¹¿æ­",
-                        "tvg_name": "å±±ä¸æèºå¹¿æ­",
-                        "province": "å±±ä¸",
+                        "name": "山东文艺广播",
+                        "tvg_name": "山东文艺广播",
+                        "province": "山东",
                         "url": "https://satellitepull.cnr.cn/live/wxsdwyssgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸ä¹¡æå¹¿æ­",
-                        "tvg_name": "å±±ä¸ä¹¡æå¹¿æ­",
-                        "province": "å±±ä¸",
+                        "name": "山东乡村广播",
+                        "tvg_name": "山东乡村广播",
+                        "province": "山东",
                         "url": "https://satellitepull.cnr.cn/live/wxsdxcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±ä¸é³ä¹å¹¿æ­",
-                        "tvg_name": "å±±ä¸é³ä¹å¹¿æ­",
-                        "province": "å±±ä¸",
+                        "name": "山东音乐广播",
+                        "tvg_name": "山东音乐广播",
+                        "province": "山东",
                         "url": "https://audiolive302.iqilu.com/sdradioYinyue/sdradio07/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "å±±è¥¿ç»¼åå¹¿æ­",
-                        "tvg_name": "å±±è¥¿ç»¼åå¹¿æ­",
-                        "province": "å±±è¥¿",
+                        "name": "山西综合广播",
+                        "tvg_name": "山西综合广播",
+                        "province": "山西",
                         "url": "https://satellitepull.cnr.cn/live/wxssxxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿é½å¸å¹¿æ­",
-                        "tvg_name": "éè¥¿é½å¸å¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西都市广播",
+                        "tvg_name": "陕西都市广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxdsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿äº¤éå¹¿æ­",
-                        "tvg_name": "éè¥¿äº¤éå¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西交通广播",
+                        "tvg_name": "陕西交通广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿ç»æµå¹¿æ­",
-                        "tvg_name": "éè¥¿ç»æµå¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西经济广播",
+                        "tvg_name": "陕西经济广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿åæå¹¿æ­",
-                        "tvg_name": "éè¥¿åæå¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西农村广播",
+                        "tvg_name": "陕西农村广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxncgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿éæ¥å¹¿æ­",
-                        "tvg_name": "éè¥¿éæ¥å¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西青春广播",
+                        "tvg_name": "陕西青春广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxqcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿ææ²å¹¿æ­",
-                        "tvg_name": "éè¥¿ææ²å¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西戏曲广播",
+                        "tvg_name": "陕西戏曲广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxxqgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿æ°é»å¹¿æ­",
-                        "tvg_name": "éè¥¿æ°é»å¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西新闻广播",
+                        "tvg_name": "陕西新闻广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "éè¥¿é³ä¹å¹¿æ­",
-                        "tvg_name": "éè¥¿é³ä¹å¹¿æ­",
-                        "province": "éè¥¿",
+                        "name": "陕西音乐广播",
+                        "tvg_name": "陕西音乐广播",
+                        "province": "陕西",
                         "url": "https://satellitepull.cnr.cn/live/wxsxxyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ä¸æµ·ä¸æ¹å¹¿æ­",
-                        "tvg_name": "ä¸æµ·ä¸æ¹å¹¿æ­",
-                        "province": "ä¸æµ·",
+                        "name": "上海东方广播",
+                        "tvg_name": "上海东方广播",
+                        "province": "上海",
                         "url": "https://satellitepull.cnr.cn/live/wx32dfgbdt/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ä¸æµ·æ°é»å¹¿æ­",
-                        "tvg_name": "ä¸æµ·æ°é»å¹¿æ­",
-                        "province": "ä¸æµ·",
+                        "name": "上海新闻广播",
+                        "tvg_name": "上海新闻广播",
+                        "province": "上海",
                         "url": "https://satellitepull.cnr.cn/live/wx32shrmgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "ç¬¬ä¸è´¢ç»å¹¿æ­",
-                        "tvg_name": "ç¬¬ä¸è´¢ç»å¹¿æ­",
-                        "province": "ä¸æµ·",
+                        "name": "第一财经广播",
+                        "tvg_name": "第一财经广播",
+                        "province": "上海",
                         "url": "https://satellitepull.cnr.cn/live/wx32dycjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·åå¸ä¹é³",
-                        "tvg_name": "åå·åå¸ä¹é³",
-                        "province": "åå·",
+                        "name": "四川城市之音",
+                        "tvg_name": "四川城市之音",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxsccszs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·äº¤éå¹¿æ­",
-                        "tvg_name": "åå·äº¤éå¹¿æ­",
-                        "province": "åå·",
+                        "name": "四川交通广播",
+                        "tvg_name": "四川交通广播",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxscjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·ç»æµå¹¿æ­",
-                        "tvg_name": "åå·ç»æµå¹¿æ­",
-                        "province": "åå·",
+                        "name": "四川经济广播",
+                        "tvg_name": "四川经济广播",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxscjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·æ°æé¢ç",
-                        "tvg_name": "åå·æ°æé¢ç",
-                        "province": "åå·",
+                        "name": "四川民族频率",
+                        "tvg_name": "四川民族频率",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxscmzgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·å²·æ±é³ä¹",
-                        "tvg_name": "åå·å²·æ±é³ä¹",
-                        "province": "åå·",
+                        "name": "四川岷江音乐",
+                        "tvg_name": "四川岷江音乐",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxscmjyyt/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·ç§å®¶è½¦925",
-                        "tvg_name": "åå·ç§å®¶è½¦925",
-                        "province": "åå·",
+                        "name": "四川私家车925",
+                        "tvg_name": "四川私家车925",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxsc925/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·æèºå¹¿æ­",
-                        "tvg_name": "åå·æèºå¹¿æ­",
-                        "province": "åå·",
+                        "name": "四川文艺广播",
+                        "tvg_name": "四川文艺广播",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxscwygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·æ°é»é¢ç",
-                        "tvg_name": "åå·æ°é»é¢ç",
-                        "province": "åå·",
+                        "name": "四川新闻频率",
+                        "tvg_name": "四川新闻频率",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxsclyshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åå·ç»¼åå¹¿æ­",
-                        "tvg_name": "åå·ç»¼åå¹¿æ­",
-                        "province": "åå·",
+                        "name": "四川综合广播",
+                        "tvg_name": "四川综合广播",
+                        "province": "四川",
                         "url": "https://satellitepull.cnr.cn/live/wxsczhgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¥¿èé½å¸çæ´»",
-                        "tvg_name": "è¥¿èé½å¸çæ´»",
-                        "province": "è¥¿è",
+                        "name": "西藏都市生活",
+                        "tvg_name": "西藏都市生活",
+                        "province": "西藏",
                         "url": "https://satellitepull.cnr.cn/live/wxxzdsshgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¥¿èå¯¹å¤äº¤é",
-                        "tvg_name": "è¥¿èå¯¹å¤äº¤é",
-                        "province": "è¥¿è",
+                        "name": "西藏对外交通",
+                        "tvg_name": "西藏对外交通",
+                        "province": "西藏",
                         "url": "https://satellitepull.cnr.cn/live/wxxzdwjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "è¥¿èæ±è¯­å¹¿æ­",
-                        "tvg_name": "è¥¿èæ±è¯­å¹¿æ­",
-                        "province": "è¥¿è",
+                        "name": "西藏汉语广播",
+                        "tvg_name": "西藏汉语广播",
+                        "province": "西藏",
                         "url": "https://satellitepull.cnr.cn/live/wxxzhygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "åµå¢ç»¼åå¹¿æ­",
-                        "tvg_name": "åµå¢ç»¼åå¹¿æ­",
-                        "province": "æ°ç",
+                        "name": "兵团综合广播",
+                        "tvg_name": "兵团综合广播",
+                        "province": "新疆",
                         "url": "https://satellitepull.cnr.cn/live/wxbtzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ°çäº¤éå¹¿æ­",
-                        "tvg_name": "æ°çäº¤éå¹¿æ­",
-                        "province": "æ°ç",
+                        "name": "新疆交通广播",
+                        "tvg_name": "新疆交通广播",
+                        "province": "新疆",
                         "url": "https://satellitepull.cnr.cn/live/wxxjjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ°çç»¿è²å¹¿æ­",
-                        "tvg_name": "æ°çç»¿è²å¹¿æ­",
-                        "province": "æ°ç",
+                        "name": "新疆绿色广播",
+                        "tvg_name": "新疆绿色广播",
+                        "province": "新疆",
                         "url": "https://satellitepull.cnr.cn/live/wxxjlsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ°çç§å®¶è½¦å¹¿æ­",
-                        "tvg_name": "æ°çç§å®¶è½¦å¹¿æ­",
-                        "province": "æ°ç",
+                        "name": "新疆私家车广播",
+                        "tvg_name": "新疆私家车广播",
+                        "province": "新疆",
                         "url": "https://satellitepull.cnr.cn/live/wxxjsjcgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ°çæ°é»å¹¿æ­",
-                        "tvg_name": "æ°çæ°é»å¹¿æ­",
-                        "province": "æ°ç",
+                        "name": "新疆新闻广播",
+                        "tvg_name": "新疆新闻广播",
+                        "province": "新疆",
                         "url": "https://satellitepull.cnr.cn/live/wxxjxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "é¦æ ¼éæä¹å£°",
-                        "tvg_name": "é¦æ ¼éæä¹å£°",
-                        "province": "äºå",
+                        "name": "香格里拉之声",
+                        "tvg_name": "香格里拉之声",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxxgllzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåäº¤éä¹å£°",
-                        "tvg_name": "äºåäº¤éä¹å£°",
-                        "province": "äºå",
+                        "name": "云南交通之声",
+                        "tvg_name": "云南交通之声",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåå½éå¹¿æ­",
-                        "tvg_name": "äºåå½éå¹¿æ­",
-                        "province": "äºå",
+                        "name": "云南国际广播",
+                        "tvg_name": "云南国际广播",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynsegb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåæè²å¹¿æ­",
-                        "tvg_name": "äºåæè²å¹¿æ­",
-                        "province": "äºå",
+                        "name": "云南教育广播",
+                        "tvg_name": "云南教育广播",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynjygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåç»æµå¹¿æ­",
-                        "tvg_name": "äºåç»æµå¹¿æ­",
-                        "province": "äºå",
+                        "name": "云南经济广播",
+                        "tvg_name": "云南经济广播",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåæ°æå¹¿æ­",
-                        "tvg_name": "äºåæ°æå¹¿æ­",
-                        "province": "äºå",
+                        "name": "云南民族广播",
+                        "tvg_name": "云南民族广播",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynmzgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåæ°é»å¹¿æ­",
-                        "tvg_name": "äºåæ°é»å¹¿æ­",
-                        "province": "äºå",
+                        "name": "云南新闻广播",
+                        "tvg_name": "云南新闻广播",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynxwgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "äºåé³ä¹å¹¿æ­",
-                        "tvg_name": "äºåé³ä¹å¹¿æ­",
-                        "province": "äºå",
+                        "name": "云南音乐广播",
+                        "tvg_name": "云南音乐广播",
+                        "province": "云南",
                         "url": "https://satellitepull.cnr.cn/live/wxynyygb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±åå¸ä¹å£°",
-                        "tvg_name": "æµæ±åå¸ä¹å£°",
-                        "province": "æµæ±",
+                        "name": "浙江城市之声",
+                        "tvg_name": "浙江城市之声",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzjcszs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±äº¤éä¹å£°",
-                        "tvg_name": "æµæ±äº¤éä¹å£°",
-                        "province": "æµæ±",
+                        "name": "浙江交通之声",
+                        "tvg_name": "浙江交通之声",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzjjtgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±ç»æµå¹¿æ­",
-                        "tvg_name": "æµæ±ç»æµå¹¿æ­",
-                        "province": "æµæ±",
+                        "name": "浙江经济广播",
+                        "tvg_name": "浙江经济广播",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzjjjgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±æ°ç996",
-                        "tvg_name": "æµæ±æ°ç996",
-                        "province": "æµæ±",
+                        "name": "浙江民生996",
+                        "tvg_name": "浙江民生996",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzjmsgb/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±å¥³ä¸»æ­çµå°",
-                        "tvg_name": "æµæ±å¥³ä¸»æ­çµå°",
-                        "province": "æµæ±",
+                        "name": "浙江女主播电台",
+                        "tvg_name": "浙江女主播电台",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzj1045/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±æ¦å¨ä¹é³",
-                        "tvg_name": "æµæ±æ¦å¨ä¹é³",
-                        "province": "æµæ±",
+                        "name": "浙江悦动之音",
+                        "tvg_name": "浙江悦动之音",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzj968/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æµæ±ä¹å£°",
-                        "tvg_name": "æµæ±ä¹å£°",
-                        "province": "æµæ±",
+                        "name": "浙江之声",
+                        "tvg_name": "浙江之声",
+                        "province": "浙江",
                         "url": "https://satellitepull.cnr.cn/live/wxzjzs/playlist.m3u8",
                         "freq": {}
             },
             {
-                        "name": "æ¯æ¥æ­æ²",
-                        "tvg_name": "æ¯æ¥æ­æ²",
-                        "province": "æå¥¥",
+                        "name": "每日歌曲",
+                        "tvg_name": "每日歌曲",
+                        "province": "思奥",
                         "url": "https://lhttp.qingting.fm/live/5021381/64k.mp3",
                         "freq": {}
             }
 ];
 
-// åå§å
+// 初始化
 let currentStation = null;
 let allProvinces = [...new Set(STATIONS.map(s => s.province))].sort();
 
-// å¡«åçä»½éæ©å¨
+// 填充省份选择器
 const provFilter = document.getElementById('provFilter');
 allProvinces.forEach(p => {
     const opt = document.createElement('option');
@@ -1905,7 +1905,7 @@ function renderStations(stations) {
     const noResult = document.getElementById('noResult');
     const stats = document.getElementById('stats');
     
-    stats.textContent = `å± ${stations.length} ä¸ªçµå°`;
+    stats.textContent = `共 ${stations.length} 个电台`;
     
     if (stations.length === 0) {
         grid.innerHTML = '';
@@ -1939,10 +1939,10 @@ function filterStations() {
     
     if (search) {
         filtered = filtered.filter(s => {
-            // æåç§°æç´¢
+            // 按名称搜索
             if (s.name.toLowerCase().includes(search)) return true;
             if (s.tvg_name && s.tvg_name.toLowerCase().includes(search)) return true;
-            // æé¢çæç´¢
+            // 按频率搜索
             if (s.freq && s.freq.fm) {
                 for (let [city, f] of Object.entries(s.freq.fm)) {
                     if (f.includes(search) || city.includes(search)) return true;
@@ -1957,10 +1957,10 @@ function filterStations() {
         });
     }
     
-    // æ»å°ææåï¼å¶ä»æçä»½æ
+    // 总台排最前，其他按省份排
     filtered.sort((a, b) => {
-        if (a.province === 'æ»å°' && b.province !== 'æ»å°') return -1;
-        if (a.province !== 'æ»å°' && b.province === 'æ»å°') return 1;
+        if (a.province === '总台' && b.province !== '总台') return -1;
+        if (a.province !== '总台' && b.province === '总台') return 1;
         return a.province.localeCompare(b.province) || a.name.localeCompare(b.name);
     });
     
@@ -1973,20 +1973,20 @@ function playStation(name, province, url, cardEl) {
     const playingProv = document.getElementById('playingProv');
     const playingStatus = document.getElementById('playingStatus');
     
-    // æ´æ° UI
+    // 更新 UI
     document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
     if (cardEl) cardEl.classList.add('active');
     
     playingName.textContent = name;
     playingProv.textContent = province;
-    playingStatus.textContent = 'å è½½ä¸­...';
+    playingStatus.textContent = '加载中...';
     currentStation = { name, province, url };
     
-    // ä½¿ç¨ HLS.js æç´æ¥æ­æ¾
+    // 使用 HLS.js 或直接播放
     if (url.endsWith('.m3u8')) {
-        // å¨æå è½½ HLS.js
+        // 动态加载 HLS.js
         if (!window.Hls) {
-            playingStatus.textContent = 'å è½½æ­æ¾å¨...';
+            playingStatus.textContent = '加载播放器...';
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
             script.onload = () => startHLS(url);
@@ -1999,9 +1999,9 @@ function playStation(name, province, url, cardEl) {
         player.src = url;
         player.load();
         player.play().then(() => {
-            playingStatus.textContent = 'æ­£å¨æ­æ¾';
+            playingStatus.textContent = '正在播放';
         }).catch(e => {
-            playingStatus.textContent = 'æ­æ¾å¤±è´¥: ' + e.message;
+            playingStatus.textContent = '播放失败: ' + e.message;
         });
     }
 }
@@ -2010,7 +2010,7 @@ function startHLS(url) {
     const player = document.getElementById('audioPlayer');
     const playingStatus = document.getElementById('playingStatus');
     
-    // åæ¸çä¸ä¸ä¸ªå®ä¾
+    // 先清理上一个实例
     if (player._hls) {
         player._hls.destroy();
         player._hls = null;
@@ -2037,26 +2037,26 @@ function startHLS(url) {
         
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             player.play().then(() => {
-                playingStatus.textContent = 'æ­£å¨æ­æ¾';
+                playingStatus.textContent = '正在播放';
             }).catch(e => {
-                playingStatus.textContent = 'ç¹å»æ­æ¾æé®å¼å§';
+                playingStatus.textContent = '点击播放按钮开始';
             });
         });
         
-        // éè´å½éè¯¯èªå¨æ¢å¤
+        // 非致命错误自动恢复
         hls.on(Hls.Events.ERROR, (event, data) => {
             if (data.fatal) {
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        playingStatus.textContent = 'ç½ç»ä¸­æ­ï¼å°è¯æ¢å¤...';
+                        playingStatus.textContent = '网络中断，尝试恢复...';
                         hls.startLoad();
                         break;
                     case Hls.ErrorTypes.MEDIA_ERROR:
-                        playingStatus.textContent = 'åªä½éè¯¯ï¼å°è¯æ¢å¤...';
+                        playingStatus.textContent = '媒体错误，尝试恢复...';
                         hls.recoverMediaError();
                         break;
                     default:
-                        playingStatus.textContent = 'æ­æ¾å¤±è´¥ï¼åæ¢ç´è¿æ¨¡å¼...';
+                        playingStatus.textContent = '播放失败，切换直连模式...';
                         hls.destroy();
                         tryDirectPlay(url);
                         break;
@@ -2068,27 +2068,27 @@ function startHLS(url) {
     } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
         tryDirectPlay(url);
     } else {
-        playingStatus.textContent = 'æµè§å¨ä¸æ¯ææ­æ¾æ­¤æ ¼å¼';
+        playingStatus.textContent = '浏览器不支持播放此格式';
     }
 }
 
-// çå¬ audio åç´ çä¸­æ­äºä»¶
+// 监听 audio 元素的中断事件
 document.getElementById('audioPlayer').addEventListener('stalled', () => {
     const player = document.getElementById('audioPlayer');
     const playingStatus = document.getElementById('playingStatus');
-    playingStatus.textContent = 'ç¼å²ä¸­...';
-    // å°è¯æ¢å¤
+    playingStatus.textContent = '缓冲中...';
+    // 尝试恢复
     if (player._hls) {
         player._hls.startLoad();
     }
 });
 
 document.getElementById('audioPlayer').addEventListener('playing', () => {
-    document.getElementById('playingStatus').textContent = 'æ­£å¨æ­æ¾';
+    document.getElementById('playingStatus').textContent = '正在播放';
 });
 
 document.getElementById('audioPlayer').addEventListener('waiting', () => {
-    document.getElementById('playingStatus').textContent = 'å è½½ä¸­...';
+    document.getElementById('playingStatus').textContent = '加载中...';
 });
 
 function tryDirectPlay(url) {
@@ -2097,9 +2097,9 @@ function tryDirectPlay(url) {
     player.src = url;
     player.load();
     player.play().then(() => {
-        playingStatus.textContent = 'æ­£å¨æ­æ¾';
+        playingStatus.textContent = '正在播放';
     }).catch(e => {
-        playingStatus.textContent = 'æ­æ¾åé»ï¼å¯å°è¯å³é®æ°æ ç­¾æå¼';
+        playingStatus.textContent = '播放受阻，可尝试右键新标签打开';
     });
 }
 
@@ -2115,7 +2115,7 @@ function stopPlaying() {
     }
     player.pause();
     player.src = '';
-    playingName.textContent = 'æªéæ©çµå°';
+    playingName.textContent = '未选择电台';
     playingProv.textContent = '';
     playingStatus.textContent = '';
     currentStation = null;
@@ -2123,10 +2123,10 @@ function stopPlaying() {
     document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
 }
 
-// åå§æ¸²æ
+// 初始渲染
 filterStations();
 
-// é®çå¿«æ·é®
+// 键盘快捷键
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') stopPlaying();
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
