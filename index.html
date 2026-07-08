@@ -15,6 +15,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft Ya
 .search-bar input:focus, .search-bar select:focus { border-color: #e94560; }
 .search-bar input { flex: 1; min-width: 200px; }
 .search-bar select { min-width: 130px; }
+.tag-bar { display: flex; gap: 8px; margin-top: 10px; }
+.tag-btn { padding: 5px 16px; border-radius: 16px; border: 1px solid #444; background: #1a1a1a; color: #aaa; cursor: pointer; font-size: 13px; transition: all .2s; }
+.tag-btn:hover { border-color: #e94560; color: #fff; }
+.tag-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
 .player-bar { background: #1a1a2e; padding: 12px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #222; position: sticky; top: 112px; z-index: 99; }
 .player-bar .now-playing { flex: 1; font-size: 15px; }
 .player-bar .now-playing .name { color: #e94560; font-weight: bold; }
@@ -53,6 +57,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft Ya
         <select id="provFilter" onchange="filterStations()">
             <option value="">全部省份</option>
         </select>
+    </div>
+    <div class="tag-bar">
+        <button class="tag-btn active" onclick="setTag('all', this)">全国</button>
+        <button class="tag-btn" onclick="setTag('享佳', this)">享佳</button>
     </div>
 </div>
 
@@ -353,6 +361,7 @@ const STATIONS = [
                         "name": "江西新闻广播",
                         "tvg_name": "江西新闻广播",
                         "province": "江西",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jiangxxwgb/playlist.m3u8",
                         "freq": {}
             },
@@ -815,6 +824,7 @@ const STATIONS = [
                         "name": "河南教育广播",
                         "tvg_name": "河南教育广播",
                         "province": "河南",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wxhnlygb/playlist.m3u8",
                         "freq": {}
             },
@@ -829,6 +839,7 @@ const STATIONS = [
                         "name": "河南戏曲广播",
                         "tvg_name": "河南戏曲广播",
                         "province": "河南",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wxhnxqgb/playlist.m3u8",
                         "freq": {}
             },
@@ -843,6 +854,7 @@ const STATIONS = [
                         "name": "河南信息广播",
                         "tvg_name": "河南信息广播",
                         "province": "河南",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wxhnxxgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1058,6 +1070,18 @@ const STATIONS = [
                         "freq": {}
             },
             {
+                        "name": "吉林音乐广播",
+                        "tags": ["享佳"],
+                        "province": "吉林",
+                        "url": "https://lhttp.qtfm.cn/live/1831/64k.mp3",
+                        "freq": {
+                                    "fm": {
+                                                "长春": "92.7"
+                                    }
+                        },
+                        "tvg_name": "吉林音乐广播"
+            },
+            {
                         "name": "延边文艺广播",
                         "tvg_name": "延边文艺广播",
                         "province": "吉林",
@@ -1075,6 +1099,7 @@ const STATIONS = [
                         "name": "江苏财经广播",
                         "tvg_name": "江苏财经广播",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jscjgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1089,6 +1114,7 @@ const STATIONS = [
                         "name": "江苏健康广播",
                         "tvg_name": "江苏健康广播",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jsjkgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1096,6 +1122,7 @@ const STATIONS = [
                         "name": "江苏交通广播",
                         "tvg_name": "江苏交通广播",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jsjtgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1117,6 +1144,7 @@ const STATIONS = [
                         "name": "江苏文艺广播",
                         "tvg_name": "江苏文艺广播",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jswygb/playlist.m3u8",
                         "freq": {}
             },
@@ -1124,6 +1152,7 @@ const STATIONS = [
                         "name": "江苏新闻广播",
                         "tvg_name": "江苏新闻广播",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jsxwgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1131,6 +1160,7 @@ const STATIONS = [
                         "name": "江苏新闻综合",
                         "tvg_name": "江苏新闻综合",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wx32jsxwzhgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1193,7 +1223,20 @@ const STATIONS = [
                         "tvg_name": "南京娱乐广播"
             },
             {
+                        "name": "南京体育广播",
+                        "tags": ["享佳"],
+                        "province": "江苏",
+                        "url": "https://lhttp.qtfm.cn/live/4966/64k.mp3",
+                        "freq": {
+                                    "fm": {
+                                                "南京": "104.3"
+                                    }
+                        },
+                        "tvg_name": "南京体育广播"
+            },
+            {
                         "name": "苏州新闻广播",
+                        "tags": ["享佳"],
                         "province": "江苏",
                         "url": "http://live.xmcdn.com/live/63/64.m3u8",
                         "freq": {
@@ -1206,6 +1249,7 @@ const STATIONS = [
             {
                         "name": "苏州交通广播",
                         "province": "江苏",
+                        "tags": ["享佳"],
                         "url": "http://live.xmcdn.com/live/64/64.m3u8",
                         "freq": {
                                     "fm": {
@@ -1234,6 +1278,7 @@ const STATIONS = [
             },
             {
                         "name": "苏州生活广播",
+                        "tags": ["享佳"],
                         "province": "江苏",
                         "url": "http://live.xmcdn.com/live/573/64.m3u8",
                         "freq": {
@@ -1306,6 +1351,7 @@ const STATIONS = [
             },
             {
                         "name": "常州新闻广播",
+                        "tags": ["享佳"],
                         "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2798.m3u8",
                         "freq": {},
@@ -1313,6 +1359,7 @@ const STATIONS = [
             },
             {
                         "name": "常州交通广播",
+                        "tags": ["享佳"],
                         "province": "江苏",
                         "url": "http://ls.qingting.fm/live/2796.m3u8",
                         "freq": {
@@ -1337,7 +1384,32 @@ const STATIONS = [
                         "tvg_name": "常州爱听音乐广播"
             },
             {
+                        "name": "常州经济广播",
+                        "tags": ["享佳"],
+                        "province": "江苏",
+                        "url": "https://lhttp.qtfm.cn/live/2794/64k.mp3",
+                        "freq": {
+                                    "fm": {
+                                                "常州": "105.2"
+                                    }
+                        },
+                        "tvg_name": "常州经济广播"
+            },
+            {
+                        "name": "常州音乐广播",
+                        "tags": ["享佳"],
+                        "province": "江苏",
+                        "url": "https://lhttp.qtfm.cn/live/2799/64k.mp3",
+                        "freq": {
+                                    "fm": {
+                                                "常州": "93.5"
+                                    }
+                        },
+                        "tvg_name": "常州音乐广播"
+            },
+            {
                         "name": "南通新闻广播",
+                        "tags": ["享佳"],
                         "province": "江苏",
                         "url": "http://live.xmcdn.com/live/739/64.m3u8",
                         "freq": {},
@@ -1373,6 +1445,7 @@ const STATIONS = [
             },
             {
                         "name": "徐州新闻综合广播",
+                        "tags": ["享佳"],
                         "province": "江苏",
                         "url": "http://ls.qingting.fm/live/4922.m3u8",
                         "freq": {
@@ -1381,6 +1454,42 @@ const STATIONS = [
                                     }
                         },
                         "tvg_name": "徐州新闻综合广播"
+            },
+            {
+                        "name": "徐州交通广播",
+                        "tags": ["享佳"],
+                        "province": "江苏",
+                        "url": "https://live.xmcdn.com/live/603/64.m3u8",
+                        "freq": {
+                                    "fm": {
+                                                "徐州": "103.3"
+                                    }
+                        },
+                        "tvg_name": "徐州交通广播"
+            },
+            {
+                        "name": "徐州农村广播",
+                        "tags": ["享佳"],
+                        "province": "江苏",
+                        "url": "https://lhttp.qtfm.cn/live/20211623/64k.mp3",
+                        "freq": {
+                                    "fm": {
+                                                "徐州": "105.0"
+                                    }
+                        },
+                        "tvg_name": "徐州农村广播"
+            },
+            {
+                        "name": "徐州音乐广播",
+                        "tags": ["享佳"],
+                        "province": "江苏",
+                        "url": "https://lhttp.qtfm.cn/live/4923/64k.mp3",
+                        "freq": {
+                                    "fm": {
+                                                "徐州": "91.9"
+                                    }
+                        },
+                        "tvg_name": "徐州音乐广播"
             },
             {
                         "name": "盐城交通广播",
@@ -1628,6 +1737,7 @@ const STATIONS = [
                         "name": "陕西新闻广播",
                         "tvg_name": "陕西新闻广播",
                         "province": "陕西",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wxsxxxwgb/playlist.m3u8",
                         "freq": {}
             },
@@ -1635,8 +1745,17 @@ const STATIONS = [
                         "name": "陕西音乐广播",
                         "tvg_name": "陕西音乐广播",
                         "province": "陕西",
+                        "tags": ["享佳"],
                         "url": "https://satellitepull.cnr.cn/live/wxsxxyygb/playlist.m3u8",
                         "freq": {}
+            },
+            {
+                        "name": "陕西青少广播",
+                        "tags": ["享佳"],
+                        "province": "陕西",
+                        "url": "https://satellitepull.cnr.cn/live/wxsxxqcgb/playlist.m3u8",
+                        "freq": {},
+                        "tvg_name": "陕西青少广播"
             },
             {
                         "name": "上海东方广播",
@@ -1894,6 +2013,14 @@ const STATIONS = [
 
 // 初始化
 let currentStation = null;
+let currentTag = 'all';
+
+function setTag(tag, btn) {
+    currentTag = tag;
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterStations();
+}
 let allProvinces = [...new Set(STATIONS.map(s => s.province))].sort();
 
 // 填充省份选择器
@@ -1951,6 +2078,11 @@ function filterStations() {
     const prov = document.getElementById('provFilter').value;
     
     let filtered = STATIONS;
+    
+    // 标签筛选
+    if (currentTag === '享佳') {
+        filtered = filtered.filter(s => s.tags && s.tags.includes('享佳'));
+    }
     
     if (prov) {
         filtered = filtered.filter(s => s.province === prov);
